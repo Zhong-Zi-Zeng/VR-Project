@@ -4,8 +4,6 @@ __pycache__/
 *$py.class
 
 # my files
-*.png
-*.jpg
 *.pt
 *.pth
 *.pkl
