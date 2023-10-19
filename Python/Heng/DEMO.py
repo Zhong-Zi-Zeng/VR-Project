@@ -24,7 +24,7 @@ while True:
     # panorama_img = cv2.resize(panorama_img, (1024, 512))
 
     if mask is not None:
-        panorama_img = cv2.addWeighted(panorama_img, 1, mask, 0.2, 5)
+        panorama_img = cv2.addWeighted(panorama_img, 1, mask, 0.2, 0)
 
     cv2.imshow('panorama', panorama_img)
     cv2.setMouseCallback('panorama', show_mask)
