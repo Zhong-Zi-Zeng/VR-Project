@@ -6,15 +6,16 @@ from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import cv2
 import copy
 import pickle
-
+import logging
 
 class MaskGenerationStrategy(ABC):
     @abstractmethod
     def generate_mask(self,
                       panorama_img: np.ndarray,
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
         pass
 
     @staticmethod
@@ -98,15 +99,23 @@ class MaskGenerationStrategy(ABC):
         plt.show()
 
     @staticmethod
-    def _store_mask(obj_data: List[dict], dir_path: str, panorama_img_name: str):
-        obj_data_directory = os.path.join('obj_data', dir_path)
+    def _store_mask(obj_data: List[dict], panorama_img: np.ndarray[np.uint8], method: str, panorama_img_name: str):
+        obj_data_directory = os.path.join('obj_data', method, panorama_img_name)
 
         if not os.path.isdir(obj_data_directory):
-            os.makedirs(os.path.join('obj_data', dir_path))
+            os.makedirs(obj_data_directory)
 
-        obj_data_path = os.path.join(obj_data_directory, panorama_img_name)
+        logging.info('Start storing panorama images with masks.')
 
-        with open(obj_data_path + '.pkl', 'wb') as file:
+        # 儲存帶有mask的panorama圖片
+        for idx, obj in enumerate(tqdm(obj_data)):
+            mask = np.repeat(obj['mask'][..., None], 3, axis=-1).astype(np.float32) * np.random.random(3)
+            mask = np.clip(mask * 255, 0, 255).astype(np.uint8)
+            panorama_img_with_mask = cv2.addWeighted(panorama_img, 1, mask, 0.2, 0)
+            cv2.imwrite(os.path.join(obj_data_directory, str(idx)) + '.png', panorama_img_with_mask)
+
+        # 儲存obj data，為了在c#端做後續的處理
+        with open(os.path.join(obj_data_directory, panorama_img_name) + '.pkl', 'wb') as file:
             pickle.dump(obj_data, file)
 
 
@@ -119,7 +128,7 @@ class CubemapYoloSA(MaskGenerationStrategy):
 
     def generate_mask(self,
                       panorama_img: np.ndarray[np.uint8],
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
 
         hp, wp = panorama_img.shape[:2]
         cube_w = wp // 4
@@ -136,9 +145,7 @@ class CubemapYoloSA(MaskGenerationStrategy):
                 panorama_mask = self._c2p_image(cubemap_mask_dict, hp, wp)[..., 0].astype(bool)
                 obj_data.append({'dir': dir, 'label': label, 'bbox': bbox, 'mask': panorama_mask})
 
-        self._store_mask(obj_data, dir_path='CubemapYoloSA', panorama_img_name=panorama_img_name)
-
-        return obj_data
+        self._store_mask(obj_data, panorama_img=panorama_img, method='CubemapYoloSA', panorama_img_name=panorama_img_name)
 
 
 class CubemapYoloSegmentation(MaskGenerationStrategy):
@@ -148,7 +155,7 @@ class CubemapYoloSegmentation(MaskGenerationStrategy):
 
     def generate_mask(self,
                       panorama_img: np.ndarray,
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
 
         hp, wp = panorama_img.shape[:2]
         cube_w = wp // 4
@@ -164,9 +171,7 @@ class CubemapYoloSegmentation(MaskGenerationStrategy):
                 panorama_mask = self._c2p_image(cubemap_mask_dict, hp, wp)[..., 0].astype(bool)
                 obj_data.append({'dir': dir, 'label': label, 'bbox': bbox, 'mask': panorama_mask})
 
-        self._store_mask(obj_data, dir_path='CubemapYoloSegmentation', panorama_img_name=panorama_img_name)
-
-        return obj_data
+        self._store_mask(obj_data, panorama_img=panorama_img, method='CubemapYoloSegmentation', panorama_img_name=panorama_img_name)
 
 
 class PanoramaYoloSegmentation(MaskGenerationStrategy):
@@ -176,7 +181,7 @@ class PanoramaYoloSegmentation(MaskGenerationStrategy):
 
     def generate_mask(self,
                       panorama_img: np.ndarray,
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
         obj_data = []
         masks, bboxes, classes = self.yolov8.predict_seg(img=panorama_img)
 
@@ -184,9 +189,7 @@ class PanoramaYoloSegmentation(MaskGenerationStrategy):
             label = self.config['LABELS'][int(cls)]
             obj_data.append({'dir': None, 'label': label, 'bbox': bbox, 'mask': mask.astype(bool)})
 
-        self._store_mask(obj_data, dir_path='PanoramaYoloSegmentation', panorama_img_name=panorama_img_name)
-
-        return obj_data
+        self._store_mask(obj_data, panorama_img=panorama_img, method='PanoramaYoloSegmentation', panorama_img_name=panorama_img_name)
 
 
 class PanoramaYoloSegmentationSA(MaskGenerationStrategy):
@@ -219,7 +222,7 @@ class PanoramaYoloSegmentationSA(MaskGenerationStrategy):
 
     def generate_mask(self,
                       panorama_img: np.ndarray[np.uint8],
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
 
         obj_data_from_panorama = PanoramaYoloSegmentation(yolov8=self.yolov8,
                                                           config=self.config).generate_mask(panorama_img,
@@ -229,8 +232,7 @@ class PanoramaYoloSegmentationSA(MaskGenerationStrategy):
             obj['mask'] = self.sa.predict(panorama_img, sa_mode=self.sa_mode, bbox=obj['bbox'])
             obj_data.append(obj)
 
-        self._store_mask(obj_data, dir_path='PanoramaYoloSegmentationSA', panorama_img_name=panorama_img_name)
-        return obj_data
+        self._store_mask(obj_data, panorama_img=panorama_img, method='PanoramaYoloSegmentationSA', panorama_img_name=panorama_img_name)
 
 
 class PanoramaCubemapYoloSegmentation(MaskGenerationStrategy):
@@ -240,7 +242,7 @@ class PanoramaCubemapYoloSegmentation(MaskGenerationStrategy):
 
     def generate_mask(self,
                       panorama_img: np.ndarray,
-                      panorama_img_name: str) -> List[dict]:
+                      panorama_img_name: str):
         # obj_data_from_cubemap = CubemapYoloSegmentation(yolov8=self.yolov8,
         #                                                 config=self.config).generate_mask(panorama_img,
         #                                                                                   panorama_img_name)
@@ -254,5 +256,3 @@ class PanoramaCubemapYoloSegmentation(MaskGenerationStrategy):
             obj_data_from_panorama = pickle.load(file)
 
         obj_data = []
-
-        return obj_data

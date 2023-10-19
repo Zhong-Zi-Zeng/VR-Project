@@ -90,7 +90,7 @@ class Main:
         else:
             raise ValueError("Invalid method value")
 
-        obj_data = mask_generator.generate_mask(panorama_img, panorama_img_name)
+        mask_generator.generate_mask(panorama_img, panorama_img_name)
 
         # 對斷掉的物件進行合併
         # self._combine_mask(obj_data)
@@ -99,8 +99,6 @@ class Main:
 
 img = cv2.imread('panorama.png')
 # img = cv2.resize(img, (1024, 512))
-m = Main(method=3)
-start = time.process_time()
+m = Main(method=2)
 m.generate_mask(img, panorama_img_name='panorama')
-end = time.process_time()
-print(end-start)
+
