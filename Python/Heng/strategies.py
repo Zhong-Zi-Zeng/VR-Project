@@ -100,6 +100,9 @@ class MaskGenerationStrategy(ABC):
 
     @staticmethod
     def _store_mask(obj_data: List[dict], panorama_img: np.ndarray[np.uint8], method: str, panorama_img_name: str):
+        """
+            儲存帶有mask的panorama圖片到字自動創建的資料夾中
+        """
         obj_data_directory = os.path.join('obj_data', method, panorama_img_name)
 
         if not os.path.isdir(obj_data_directory):
@@ -115,7 +118,7 @@ class MaskGenerationStrategy(ABC):
             cv2.imwrite(os.path.join(obj_data_directory, str(idx)) + '.png', panorama_img_with_mask)
 
         # 儲存obj data，為了在c#端做後續的處理
-        with open(os.path.join(obj_data_directory, panorama_img_name) + '.pkl', 'wb') as file:
+        with open(os.path.join(obj_data_directory, 'obj_data.pkl'), 'wb') as file:
             pickle.dump(obj_data, file)
 
 
