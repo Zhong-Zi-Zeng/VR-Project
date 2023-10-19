@@ -4,6 +4,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import os
 import yaml
 import matplotlib
 from typing import Optional
@@ -21,7 +22,6 @@ class Main:
                  yolov8_seg_model_type: str = 'yolov8x',
                  sa_model_type: str = 'vit_h',
                  sa_mode: str = 'box',
-                 method: int = 0,
                  threshold: float = 0.8,
                  device: str = 'cuda'):
         """
@@ -30,13 +30,6 @@ class Main:
                 yolov8_seg_model_type: Yolo-V8的segmentation模型，可選擇 [yolov8s、yolov8m、yolov8x]
                 sa_model_type: Segment-Anything的模型，可選擇 [vit_h、vit_l、vit_b]
                 sa_mode: Segment-Anything的模式，可選擇 [point, box, both]
-                method: mask執行方法，目前可選擇4 [0, 1, 2, 3]
-                    0: 直接將每一個Cubemap 送入Yolo-V8的Segmentation (尚未完成合併斷掉的mask)
-                    1: 直接將每一個Cubemap 送入Yolo-V8的Object detection後再送入SA (尚未完成合併斷掉的mask)
-                    2: 直接將Panorama送入Yolo-V8的Segmentation (已完成)
-                    3: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation，再去做後處理 (尚未完成合併斷掉的mask)
-                    4: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation後，再利用SA去refine (已完成，但是最後的mask可能會有重複的狀況)
-
                 threshold: 用來合併mask
                 device: 運行裝置，可選擇 [cpu、cuda]
         """
@@ -54,15 +47,70 @@ class Main:
 
         self.sa = SegmentAnything(model_type=sa_model_type, device=device)
         self.sa_mode = sa_mode
-        self.method = method
+        self.method = None
 
         self.converter = PanoramaCubemapConverter()
         self.threshold = threshold
+        self.method_name = [
+            'CubemapYoloSegmentation',
+            'CubemapYoloSA',
+            'PanoramaYoloSegmentation',
+            'PanoramaCubemapYoloSegmentation',
+            'PanoramaYoloSegmentationSA'
+        ]
 
         with open('./yolov8_label.yaml', 'r') as file:
             self.config = yaml.load(file, Loader=yaml.CLoader)
 
         logging.info('Now use {} for inference.'.format(device))
+
+    def receive_data(self):
+        """
+            在收到訊息後要做的事情:
+                1. 在剛開始的時候需要回傳VR端現有的照片有甚麼，以及現有的照片名稱(包含副檔名)
+                2. 收到使用者選擇的照片名稱和指定的方法編號
+        """
+        pass
+
+    def _check_obj_data(self, method: int, panorama_img_name_ext: str):
+        """
+            在收到指定的圖片名稱後，先去資料夾下查詢是否已經存在，否則則執行generate_mask後再返回數據
+
+            Args:
+                method: mask執行方法，目前可選擇4 [0, 1, 2, 3]
+                    0: 直接將每一個Cubemap 送入Yolo-V8的Segmentation (尚未完成合併斷掉的mask)
+                    1: 直接將每一個Cubemap 送入Yolo-V8的Object detection後再送入SA (尚未完成合併斷掉的mask)
+                    2: 直接將Panorama送入Yolo-V8的Segmentation (已完成)
+                    3: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation，再去做後處理 (尚未完成合併斷掉的mask)
+                    4: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation後，再利用SA去refine (已完成，但是最後的mask可能會有重複的狀況)
+                panorama_img_name_ext: 指定的panorama圖片名稱(包含副檔名)
+        """
+        self.method = method
+        panorama_img_name = os.path.splitext(panorama_img_name_ext)[0].lower()  # 不包含副檔名的
+        obj_data_directory = os.path.join('obj_data', self.method_name[method], panorama_img_name)
+
+        # 檢查該圖片的mask是否存在在obj_data資料夾下
+        if not os.path.isdir(obj_data_directory):
+            panorama_img = cv2.imread(os.path.join('material', panorama_img_name_ext))
+            self.generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
+
+        # 讀取obj_data
+        with open(os.path.join('obj_data', self.method_name[method], panorama_img_name, 'obj_data.pkl'), 'rb') as file:
+            obj_data = pickle.load(file)
+
+        # 讀取所有圖片
+        panorama_with_mask = [cv2.imread(os.path.join(obj_data_directory, mask_name)) for mask_name in
+                              os.listdir(obj_data_directory) if mask_name != 'obj_data.pkl']
+
+        # TODO:將所有圖片讀取出後傳送到VR端
+
+    def send_data(self):
+        """
+            負責將訊息傳送回VR端
+            1. 影像
+            2. obj_data
+        """
+        pass
 
     def generate_mask(self,
                       panorama_img: np.ndarray[np.uint8],
@@ -92,13 +140,9 @@ class Main:
 
         mask_generator.generate_mask(panorama_img, panorama_img_name)
 
-        # 對斷掉的物件進行合併
-        # self._combine_mask(obj_data)
-        # self._store_mask(obj_data=obj_data, panorama_img_name=panorama_img_name)
 
-
-img = cv2.imread('panorama.png')
+# img = cv2.imread('panorama.png')
 # img = cv2.resize(img, (1024, 512))
-m = Main(method=2)
-m.generate_mask(img, panorama_img_name='panorama')
-
+m = Main()
+m._check_obj_data(2, panorama_img_name_ext='panorama.png')
+# m.generate_mask(img, panorama_img_name='panorama')
