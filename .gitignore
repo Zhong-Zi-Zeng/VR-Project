@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Heng
+*.png
+*.jpg
+
 # Pytorch
 *.pt
 *.pth
