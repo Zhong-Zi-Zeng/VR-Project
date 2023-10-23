@@ -12,6 +12,8 @@ __pycache__/
 /.idea
 
 # Unity
+**/Plugins/MacOSX/
+**/Plugins/iOS/
 **/[Ll]ibrary/
 **/[Tt]emp/
 **/[Oo]bj/
