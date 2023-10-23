@@ -76,7 +76,7 @@ public class NewBehaviourScript : MonoBehaviour
             float theta = Mathf.Atan2(hitPoint.x, hitPoint.z);
 
             float x = ((theta + Mathf.PI) * 2048) / (2 * Mathf.PI);
-            float y = 1054 - ((2 * phi + Mathf.PI) * 1024) / (2 * Mathf.PI);
+            float y = 1024 - ((2 * phi + Mathf.PI) * 1024) / (2 * Mathf.PI);
 
             colorInfoText2.text = $"Hit Position: ({hit.point}),U: {x}, V: {y}";
         }
