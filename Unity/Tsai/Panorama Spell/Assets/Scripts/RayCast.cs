@@ -26,7 +26,7 @@ public class RayCast : MonoBehaviour
 
             colorInfoText.text = $"Hit Position: ({hit.point}),U: {x}, V: {y}";
         }
-
+         //:)
    
        
     }
