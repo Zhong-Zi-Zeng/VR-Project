@@ -1,5 +1,5 @@
 // Server
-///*
+/*
 using UnityEngine;
 using UnityEngine.UI;
 using System.Net;
@@ -55,9 +55,7 @@ public class Recv_image: MonoBehaviour
                 client = listener.AcceptTcpClient();
                 NetworkStream stream = new NetworkStream(client.Client);
                 StreamReader sr = new StreamReader(stream);
-                //print(sr.ReadToEnd());
                 
-                //string jsonData = sr.ReadLine();
                 string jsonData = sr.ReadToEnd();
                 Debug.Log("Received Data: " + jsonData);
 
@@ -84,4 +82,4 @@ public class Recv_image: MonoBehaviour
 
     }
 }
-//*/
+*/
