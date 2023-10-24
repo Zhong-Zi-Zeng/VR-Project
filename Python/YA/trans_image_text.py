@@ -1,6 +1,7 @@
 # Client
 import socket
 import json
+import cv2
 
 TCP_IP = '127.0.0.1'
 TCP_PORT = 7777
