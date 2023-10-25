@@ -9,7 +9,7 @@ __pycache__/
 
 # Pycharm
 *.pkl
-/.idea
+**/.idea
 
 # Unity
 **/Plugins/MacOSX/
