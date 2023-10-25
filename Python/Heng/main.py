@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import os
 import yaml
+import json
 import matplotlib
 from typing import Optional
 from Yolov8 import Yolov8
@@ -87,20 +88,20 @@ class Main:
         """
         self.method = method
         panorama_img_name = os.path.splitext(panorama_img_name_ext)[0].lower()  # 不包含副檔名的
-        obj_data_directory = os.path.join('obj_data', self.method_name[method], panorama_img_name)
+        obj_data_directory = os.path.join('id_map', self.method_name[method], panorama_img_name)
 
-        # 檢查該圖片的mask是否存在在obj_data資料夾下
+        # 檢查該圖片的mask是否存在在id_map資料夾下
         if not os.path.isdir(obj_data_directory):
             panorama_img = cv2.imread(os.path.join('material', panorama_img_name_ext))
             self.generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
 
-        # 讀取obj_data
-        with open(os.path.join('obj_data', self.method_name[method], panorama_img_name, 'obj_data.pkl'), 'rb') as file:
-            obj_data = pickle.load(file)
+        # 讀取id_map
+        with open(os.path.join('id_map', self.method_name[method], panorama_img_name, 'id_map.json'), 'r') as file:
+            id_map = json.load(file)
 
         # 讀取所有圖片
         panorama_with_mask = [cv2.imread(os.path.join(obj_data_directory, mask_name)) for mask_name in
-                              os.listdir(obj_data_directory) if mask_name != 'obj_data.pkl']
+                              os.listdir(obj_data_directory) if mask_name != 'id_map.pkl']
 
         # TODO:將所有圖片讀取出後傳送到VR端
 

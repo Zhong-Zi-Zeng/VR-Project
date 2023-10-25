@@ -3,13 +3,21 @@ from typing import Optional, Dict, List
 from abc import ABC, abstractmethod
 from tools.PanoramaCubemapConverter import PanoramaCubemapConverter
 from tqdm import tqdm
+from json import JSONEncoder
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import cv2
 import copy
-import pickle
 import logging
+import json
+import pickle
+
+class NumpyArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
 
 class MaskGenerationStrategy(ABC):
     @abstractmethod
@@ -103,24 +111,34 @@ class MaskGenerationStrategy(ABC):
         """
             儲存帶有mask的panorama圖片到字自動創建的資料夾中
         """
-        obj_data_directory = os.path.join('obj_data', method, panorama_img_name)
+        obj_data_directory = os.path.join('id_map', method, panorama_img_name)
 
         if not os.path.isdir(obj_data_directory):
             os.makedirs(obj_data_directory)
 
         logging.info('Start storing panorama images with masks.')
 
-        # 儲存帶有mask的panorama圖片
+        id_map = np.zeros(shape=panorama_img.shape[:2], dtype=np.int32)
+
         for idx, obj in enumerate(tqdm(obj_data)):
+            # 將mask的位置乘上類別對應的id後，與id_map結合
+            # 並且要避免有重複的類別疊在一起
+            mask_id = ((id_map == 0) & (obj['mask'] == 1)) * obj['mask'] * (obj['id'] + 1)
+            id_map += mask_id
+
+            # 儲存帶有mask的panorama圖片
             mask = np.repeat(obj['mask'][..., None], 3, axis=-1).astype(np.float32) * np.random.random(3)
             mask = np.clip(mask * 255, 0, 255).astype(np.uint8)
             panorama_img_with_mask = cv2.addWeighted(panorama_img, 1, mask, 0.2, 0)
             cv2.imwrite(os.path.join(obj_data_directory, str(idx)) + '.png', panorama_img_with_mask)
 
-        # 儲存obj data，為了在c#端做後續的處理
-        with open(os.path.join(obj_data_directory, 'obj_data.pkl'), 'wb') as file:
-            pickle.dump(obj_data, file)
+        logging.info('Start storing id_map.')
 
+        # 儲存id_map，為了在c#端做後續的處理
+        with open(os.path.join(obj_data_directory, 'id_map.json'), 'w') as file:
+            json.dump(id_map.tolist(), file)
+
+        logging.info('Finish !')
 
 class CubemapYoloSA(MaskGenerationStrategy):
     def __init__(self, yolov8, sa, sa_mode, config):
@@ -146,7 +164,7 @@ class CubemapYoloSA(MaskGenerationStrategy):
                 cubemap_mask = self.sa.predict(img, sa_mode=self.sa_mode, bbox=bbox)
                 cubemap_mask_dict = self._create_cubemap_with_mask(cubemap_mask, cube_w, dir)
                 panorama_mask = self._c2p_image(cubemap_mask_dict, hp, wp)[..., 0].astype(bool)
-                obj_data.append({'dir': dir, 'label': label, 'bbox': bbox, 'mask': panorama_mask})
+                obj_data.append({'dir': dir, 'label': label, 'id': int(cls), 'bbox': bbox, 'mask': panorama_mask})
 
         self._store_mask(obj_data, panorama_img=panorama_img, method='CubemapYoloSA', panorama_img_name=panorama_img_name)
 
@@ -172,7 +190,7 @@ class CubemapYoloSegmentation(MaskGenerationStrategy):
                 label = self.config['LABELS'][int(cls)]
                 cubemap_mask_dict = self._create_cubemap_with_mask(mask, cube_w, dir)
                 panorama_mask = self._c2p_image(cubemap_mask_dict, hp, wp)[..., 0].astype(bool)
-                obj_data.append({'dir': dir, 'label': label, 'bbox': bbox, 'mask': panorama_mask})
+                obj_data.append({'dir': dir, 'label': label, 'id': int(cls), 'bbox': bbox, 'mask': panorama_mask})
 
         self._store_mask(obj_data, panorama_img=panorama_img, method='CubemapYoloSegmentation', panorama_img_name=panorama_img_name)
 
@@ -190,10 +208,9 @@ class PanoramaYoloSegmentation(MaskGenerationStrategy):
 
         for mask, bbox, cls in zip(masks[0], bboxes[0], classes[0]):
             label = self.config['LABELS'][int(cls)]
-            obj_data.append({'dir': None, 'label': label, 'bbox': bbox, 'mask': mask.astype(bool)})
+            obj_data.append({'dir': None, 'label': label, 'id': int(cls), 'bbox': bbox, 'mask': mask.astype(bool)})
 
         self._store_mask(obj_data, panorama_img=panorama_img, method='PanoramaYoloSegmentation', panorama_img_name=panorama_img_name)
-
 
 class PanoramaYoloSegmentationSA(MaskGenerationStrategy):
     def __init__(self, yolov8, sa, sa_mode, config):
