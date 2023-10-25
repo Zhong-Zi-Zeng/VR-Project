@@ -3,13 +3,17 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Heng
+Python/Heng/runs/
+Python/Heng/material/
+
 # Pytorch
 *.pt
 *.pth
 
 # Pycharm
 *.pkl
-/.idea
+**/.idea
 
 # Unity
 **/Plugins/MacOSX/

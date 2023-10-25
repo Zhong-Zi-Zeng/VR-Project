@@ -55,7 +55,7 @@ public class Recv_image: MonoBehaviour
                 client = listener.AcceptTcpClient();
                 NetworkStream stream = new NetworkStream(client.Client);
                 StreamReader sr = new StreamReader(stream);
-                
+
                 string jsonData = sr.ReadToEnd();
                 Debug.Log("Received Data: " + jsonData);
 
@@ -75,10 +75,10 @@ public class Recv_image: MonoBehaviour
         public byte[] image;
     }
 
-    private void FixedUpdate()  // UnityµLªk¦b±µ¦¬¤èªk¤¤ª½±µ³]©w texture
+    private void FixedUpdate()  // Unityï¿½Lï¿½kï¿½bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½kï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½]ï¿½w texture
     {
         tex.LoadImage(imageDatas);
-        img.texture = tex;  // ¦b RawImage ¤WÅã¥Ü¹Ï¤ù
+        img.texture = tex;  // ï¿½b RawImage ï¿½Wï¿½ï¿½Ü¹Ï¤ï¿½
 
     }
 }
