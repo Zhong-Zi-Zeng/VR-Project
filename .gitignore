@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Heng
+Python/Heng/runs/
+Python/Heng/material/
+
 # Pytorch
 *.pt
 *.pth
