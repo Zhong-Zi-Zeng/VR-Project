@@ -6,8 +6,9 @@ __pycache__/
 # Heng
 Python/Heng/runs/
 Python/Heng/material/
-Python/Heng/*.png
-Python/Heng/*.jpg
+Python/Heng/**.png
+Python/Heng/**.jpg
+Python/Heng/**.json
 
 # Pytorch
 *.pt
