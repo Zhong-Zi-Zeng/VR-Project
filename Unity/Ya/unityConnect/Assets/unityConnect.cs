@@ -1,5 +1,4 @@
 // Server
-/*
 using UnityEngine;
 using UnityEngine.UI;
 using System.Net;
@@ -74,7 +73,19 @@ public class Recv_image_text: MonoBehaviour
         }
         catch (Exception e)
         {
-            print(e);
+            Debug.Log(e);
+        }
+    }
+
+    public void SendData(float number)
+    {
+        try
+        {
+            
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
         }
     }
 
@@ -92,4 +103,3 @@ public class Recv_image_text: MonoBehaviour
         //Debug.Log(tex.width);
     }
 }
-*/
