@@ -97,27 +97,13 @@ class Yolov8:
                (isinstance(img, np.ndarray) and len(
                    img.shape) != 4), 'You are trying to input multiple  images, but their type is not list.'
 
-        if image_format == 'BGR' and isinstance(img, list):
-            img = [bgr_img[..., ::-1] for bgr_img in img]
-        elif image_format == 'BGR' and isinstance(img, np.ndarray):
-            img = img[..., ::-1]
-
         if isinstance(img, list):
             H, W = img[0].shape[:2]
         elif isinstance(img, np.ndarray):
             H, W = img.shape[:2]
 
-        resize = transforms.Resize([H, W])
         results = self.seg_model.predict(img, imgsz=(H, W), retina_masks=True)
-
-        masks = []
-        for result in results:
-            if result.masks is None:
-                masks.append([])
-                continue
-
-            # 由yolov8輸出的mask的大小為640x640，所以這邊要把mask resize回跟輸入圖片一樣的大小
-            masks.append(resize(result.masks.data).cpu().numpy())
+        masks = [result.masks.data.cpu().numpy() for result in results]
 
         cls = [result.boxes.cls.cpu().numpy() for result in results]
         bbox = [result.boxes.xyxy.cpu().numpy() for result in results]
