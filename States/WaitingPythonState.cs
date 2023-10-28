@@ -11,7 +11,7 @@ public class WaitingPythonState : StateBase
         Debug.Log("Now in the WaitPythonState:");
 
         // 先載入Scene
-        SceneManager.LoadScene(SceneName.WaitingPythonScene);
+        GameManager.ChangeScene(SceneName.WaitingPythonScene);
 
         // 將使用者訊息傳送給Python端，並等待回覆
 

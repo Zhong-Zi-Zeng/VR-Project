@@ -12,7 +12,7 @@ public class BeginState : StateBase
         Debug.Log("Now in the BeginState:");
 
         // 先載入Scene
-        SceneManager.LoadScene(SceneName.BeginScene);
+        GameManager.ChangeScene(SceneName.BeginScene);
 
 
     }
