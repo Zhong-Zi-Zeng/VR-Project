@@ -4,8 +4,9 @@ __pycache__/
 *$py.class
 
 # Heng
-Python/Heng/runs/
-Python/Heng/material/
+/Python/Heng/runs/
+/Python/Heng/material/
+/Python/Heng/id_map
 
 # Pytorch
 *.pt
