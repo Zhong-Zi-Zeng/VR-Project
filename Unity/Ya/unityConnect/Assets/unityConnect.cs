@@ -7,40 +7,45 @@ using System.Threading;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
-public class Recv_image_text: MonoBehaviour
+public class unityConnect : MonoBehaviour
 {
-    Thread receiveThread;
-    TcpClient client;
-    TcpListener listener;
-    int port;
+    //receive
+    private Thread receiveThread;
+    private TcpClient client;
+    private TcpListener listener;
 
-    //接收
     public RawImage img;
     private byte[] imageDatas = new byte[0];
     private Texture2D tex;
 
-    //傳送
+    //send
+    private Thread sendThread;
 
     private void Start()
     {
         InitTcp();
-        tex = new Texture2D(4096, 2048);    //自動偵測圖片大小調整
+
+        //receive
+        tex = new Texture2D(4096, 2048);    //自動調整圖片大小
+        receiveThread = new(new ThreadStart(ReceiveData));
+        receiveThread.IsBackground = true;
+        receiveThread.Start();
+
+        //send
+        sendThread = new Thread(new ThreadStart(SendData));
+        sendThread.IsBackground = true;
+        sendThread.Start();
     }
+
 
     void InitTcp()
     {
-        port = 7777;
         print("TCP Initialized");
-        IPEndPoint anyIP = new(IPAddress.Parse("127.0.0.1"), port);
+        IPEndPoint anyIP = new(IPAddress.Parse("127.0.0.1"), 7777);
         listener = new TcpListener(anyIP);
         listener.Start();
-
-        receiveThread = new(new ThreadStart(ReceiveData))
-        {
-            IsBackground = true
-        };
-        receiveThread.Start();
     }
 
     private void OnDestroy()
@@ -56,18 +61,23 @@ public class Recv_image_text: MonoBehaviour
             while (true)
             {
                 client = listener.AcceptTcpClient();
-                NetworkStream stream = new(client.Client);
-                StreamReader sr = new(stream);
-
+                NetworkStream recvStream = client.GetStream();
+                StreamReader sr = new(recvStream);
+                
                 string jsonData = sr.ReadToEnd();
                 Debug.Log("Received Data: " + jsonData);
 
                 // 解析 json 
-                Data data = JsonUtility.FromJson<Data>(jsonData);
+                SendDataStruct data = JsonUtility.FromJson<SendDataStruct>(jsonData);
+                
+                // 顯示
+                Debug.Log("Received list length: " + data.list.Count);  // 2048 * 4096 = 8388608
+                Debug.Log("H: " + data.H);
+                Debug.Log("W: " + data.W);
 
-                // 顯示 image 和 text
+                Debug.Log("Received image: " + imageDatas);
                 imageDatas = data.image;
-                Debug.Log("Received image: " + data.image);
+
                 Debug.Log("Received text: " + data.text);
             }
         }
@@ -77,22 +87,48 @@ public class Recv_image_text: MonoBehaviour
         }
     }
 
-    public void SendData(float number)
+    private void SendData()
     {
         try
         {
-            
+            while (true)
+            {
+                client = listener.AcceptTcpClient();
+                NetworkStream sendStream = client.GetStream();
+                StreamWriter sw = new(sendStream);
+
+                RecvDataStruct sendData = new()
+                {
+                   parameter = 123  // 要傳的參數
+                };
+                string jsonToSend = JsonUtility.ToJson(sendData);     
+                sw.Write(jsonToSend);
+                sw.Flush();
+
+                Thread.Sleep(1000);
+            }
         }
         catch (Exception e)
         {
             Debug.Log(e);
         }
     }
-
-    public class Data
+    //receive
+    [SerializeField]
+    public class SendDataStruct
     {
+        public List<string> list;
+        public string H;
+        public string W;
         public byte[] image;
         public string text;
+    }
+
+    //send
+    [SerializeField]
+    public class RecvDataStruct
+    {
+        public int parameter;
     }
 
     private void FixedUpdate()  
