@@ -31,7 +31,7 @@ public class GameData
 
 public class GameManager
 {
-    private static FSM fsm = new FSM();
+    private static FSM fsm = new();
        
     /// <summary>
     /// 把所有狀態加入到fsm中
@@ -51,4 +51,13 @@ public class GameManager
     {
         fsm.SetState(stateId);        
     }
+
+    /// <summary>
+    /// 作為每個狀態的接口，可透過這個函式去切換Scene
+    /// </summary>
+    public static void ChangeScene(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+    }
+
 }
