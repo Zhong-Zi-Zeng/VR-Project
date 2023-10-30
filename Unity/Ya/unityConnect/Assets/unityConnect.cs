@@ -16,20 +16,23 @@ public class unityConnect : MonoBehaviour
     private TcpClient client;
     private TcpListener listener;
 
+    //send
+    private Thread sendThread;
+    private TcpListener reader;
+    private TcpClient client_2;
+
     public RawImage img;
     private byte[] imageDatas = new byte[0];
     private Texture2D tex;
+    public Button yourButton;
 
-    //send
-    private Thread sendThread;
-
-    private void Start()
+    void Start()
     {
         InitTcp();
 
         //receive
         tex = new Texture2D(4096, 2048);    //自動調整圖片大小
-        receiveThread = new(new ThreadStart(ReceiveData));
+        receiveThread = new Thread(new ThreadStart(ReceiveData));
         receiveThread.IsBackground = true;
         receiveThread.Start();
 
@@ -37,15 +40,23 @@ public class unityConnect : MonoBehaviour
         sendThread = new Thread(new ThreadStart(SendData));
         sendThread.IsBackground = true;
         sendThread.Start();
+
+        //Button btn = yourButton.GetComponent<Button>();
+        //btn.onClick.AddListener(this.SendData);
     }
 
 
     void InitTcp()
     {
         print("TCP Initialized");
-        IPEndPoint anyIP = new(IPAddress.Parse("127.0.0.1"), 7777);
-        listener = new TcpListener(anyIP);
+
+        IPEndPoint receiveIp = new(IPAddress.Parse("127.0.0.1"), 7777);
+        listener = new TcpListener(receiveIp);
         listener.Start();
+
+        IPEndPoint sendIp = new(IPAddress.Parse("127.0.0.1"), 6666);
+        reader = new TcpListener(sendIp);
+        reader.Start();
     }
 
     private void OnDestroy()
@@ -64,21 +75,19 @@ public class unityConnect : MonoBehaviour
                 NetworkStream recvStream = client.GetStream();
                 StreamReader sr = new(recvStream);
                 
-                string jsonData = sr.ReadToEnd();
-                Debug.Log("Received Data: " + jsonData);
+                string jsonData  = sr.ReadToEnd();
 
                 // 解析 json 
                 SendDataStruct data = JsonUtility.FromJson<SendDataStruct>(jsonData);
-                
-                // 顯示
-                Debug.Log("Received list length: " + data.list.Count);  // 2048 * 4096 = 8388608
-                Debug.Log("H: " + data.H);
-                Debug.Log("W: " + data.W);
 
-                Debug.Log("Received image: " + imageDatas);
                 imageDatas = data.image;
+                Debug.Log("Received image: " + data.image);
+                //Debug.Log("Received H: " + data.h);
+                //Debug.Log("Received W: " + data.w);
+                //Debug.Log("Received text: " + data.text);
 
-                Debug.Log("Received text: " + data.text);
+
+
             }
         }
         catch (Exception e)
@@ -87,39 +96,35 @@ public class unityConnect : MonoBehaviour
         }
     }
 
-    private void SendData()
+    public void SendData()
     {
-        try
+        while (true)
         {
-            while (true)
+            Debug.Log("SendData");
+            Thread.Sleep(5000);
+
+            client_2 = reader.AcceptTcpClient();
+            NetworkStream sendStream = client_2.GetStream();
+            StreamWriter sw = new(sendStream);
+
+            RecvDataStruct sendData = new()
             {
-                client = listener.AcceptTcpClient();
-                NetworkStream sendStream = client.GetStream();
-                StreamWriter sw = new(sendStream);
-
-                RecvDataStruct sendData = new()
-                {
-                   parameter = 123  // 要傳的參數
-                };
-                string jsonToSend = JsonUtility.ToJson(sendData);     
-                sw.Write(jsonToSend);
-                sw.Flush();
-
-                Thread.Sleep(1000);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e);
+                parameter = 123,  // 要傳的參數
+                text = "generate"
+            };
+            string jsonToSend = JsonUtility.ToJson(sendData);
+            sw.Write(jsonToSend);
+            sw.Flush();
+            Debug.Log("Sended");
         }
     }
     //receive
     [SerializeField]
     public class SendDataStruct
     {
-        public List<string> list;
-        public string H;
-        public string W;
+        public List<string> id_map;
+        public string h;
+        public string w;
         public byte[] image;
         public string text;
     }
@@ -129,6 +134,7 @@ public class unityConnect : MonoBehaviour
     public class RecvDataStruct
     {
         public int parameter;
+        public string text;
     }
 
     private void FixedUpdate()  

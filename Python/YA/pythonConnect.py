@@ -3,62 +3,63 @@ import socket
 import json
 import cv2
 import numpy as np
+import logging
+from threading import Thread
+
 
 class pythonConnect:
-    def __init__(self, TCP_IP='127.0.0.1', TCP_PORT_SEND=7777):
+    def __init__(self, TCP_IP='127.0.0.1'):
         self.TCP_IP = TCP_IP
-        self.TCP_PORT_SEND = TCP_PORT_SEND
 
-    def send_data_to_unity(self, json_path=None, image_path=None, text_data=None):
+        self.send_port = 7777
+        self.receive_port = 6666
 
+    @staticmethod
+    def encode_image(image: np.ndarray, image_format: str):
+        """
+            將照片轉換成bytes
+        :param image: np.ndarray
+        :param image_format: 可以為'.jpg' or '.png'
+        :return: 被encode的image
+        """
+        assert image_format in ['.jpg', '.png'], 'The image\'s format was wrong.'
+        return cv2.imencode(f'.{image_format}', image)[1].ravel().tolist()
+
+    def send_data_to_unity(self, image=None, text=None):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.TCP_IP, self.TCP_PORT_SEND))
+        sock.connect((self.TCP_IP, self.send_port))
 
-        # 處理圖片
-        if image_path is not None:
-            image = cv2.imread(image_path)
-            _, image_format = image_path.rsplit('.', 1)     # 自動偵測圖片格
-            image_data = cv2.imencode(f'.{image_format}', image)[1].ravel().tolist()
-        else:
-            image_data = None
-
-        # 處理json檔，裡面是list
-        if json_path is not None:
-            with open(json_path) as f:
-                list_data = json.load(f)
-        else:
-            list_data = None
-
-        dict_data = {
-            'list': np.array(list_data).reshape(-1).tolist(),   # 檢查unity收到的資料 2048 * 4096 = 8388608
-            'H': len(list_data) if list_data is not None else None,
-            'W': len(list_data[0]) if list_data is not None else None,
-            'image': image_data,
-            'text': text_data,
+        data = {
+            'text': text,
+            'image': image
         }
-        json_data = json.dumps(dict_data)
+
+        # 傳送給unity
+        json_data = json.dumps(data)
         sock.sendall(bytes(json_data, encoding='utf-8'))
         sock.close()
-        print('Data sent to Unity')
 
-    def receive_data_from_unity(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.TCP_IP, self.TCP_PORT_SEND))
+        logging.info('Data sent to Unity')
+
+    def listener(self, callback, *args, **kwargs):
+        logging.info('start listen')
 
         while True:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.TCP_IP, self.receive_port))
             data = sock.recv(1024)  # 可更改buffer大小
             recv_dict = json.loads(data.decode('utf-8'))
-            print('Data received from Unity:', recv_dict['parameter'])  # 接收參數
-
-        sock.close()
+            callback(recv_dict, *args, **kwargs)
 
 
-# 傳送格式
-json_path = 'id_map.json'
-image_path = 'panorama.png'
-text_data = "Hello, this is some text."
+if __name__ == '__main__':
+    # 執行
+    python_connector = pythonConnect()
 
-# 執行
-python_connector = pythonConnect()
-python_connector.send_data_to_unity(json_path=json_path, image_path=None, text_data=None)
-python_connector.receive_data_from_unity()
+    # 傳送格式
+    image = python_connector.encode_image(cv2.imread('panorama.png'), image_format='.png')
+    id_map = python_connector.encode_image(cv2.imread('id_map.png'), image_format='.png')
+    text_data = "Hello, this is some text."
+
+    Thread(target=python_connector.send_data_to_unity, kwargs={"image": image, 'text': text_data}).start()
+#     Thread(target=python_connector.receive_data_from_unity).start()

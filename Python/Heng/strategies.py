@@ -13,11 +13,6 @@ import logging
 import json
 import pickle
 
-class NumpyArrayEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return JSONEncoder.default(self, obj)
 
 class MaskGenerationStrategy(ABC):
     @abstractmethod
@@ -135,8 +130,7 @@ class MaskGenerationStrategy(ABC):
         logging.info('Start storing id_map.')
 
         # 儲存id_map，為了在c#端做後續的處理
-        with open(os.path.join(obj_data_directory, 'id_map.json'), 'w') as file:
-            json.dump(id_map.tolist(), file)
+        cv2.imwrite(os.path.join(obj_data_directory, 'id_map.png'), id_map.astype(np.uint8))
 
         logging.info('Finish !')
 
