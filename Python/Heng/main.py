@@ -68,13 +68,7 @@ class Main:
         logging.info('Now use {} for inference.'.format(device))
 
         self.trans_api = pythonConnect()
-
-        panorama_with_mask, id_map, index_map = self._check_obj_data(2, panorama_img_name_ext='panorama.png')
-        # for i in range(2):
-        self.trans_api.send_data_to_unity(id_map=id_map)
-        self.trans_api.send_data_to_unity(index_map=index_map)
-
-        # self.trans_api.listener(self.callback)
+        self.trans_api.listener(self.callback)
 
     def callback(self, data, *args, **kwargs):
         """

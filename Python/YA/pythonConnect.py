@@ -75,5 +75,6 @@ if __name__ == '__main__':
     id_map = python_connector.encode_image(cv2.imread('id_map.png'), image_format='.png')
     text_data = "Hello, this is some text."
 
-    Thread(target=python_connector.send_data_to_unity, kwargs={"image": panorama, 'text': text_data}).start()
+    Thread(target=python_connector.send_data_to_unity, kwargs={"id_map": id_map, 'text': text_data}).start()
+    Thread(target=python_connector.send_data_to_unity, kwargs={"panorama": panorama, 'text': text_data}).start()
 #     Thread(target=python_connector.receive_data_from_unity).start()

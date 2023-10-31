@@ -14,10 +14,10 @@ using Unity.VisualScripting;
 [SerializeField]
 public class RecvDataStruct
 {
-    public byte[] panoramaWithMask; // 帶有mask的panorama
-    public byte[] panorama; // 一般的panorama
-    public byte[] idMap; // 用來儲存每個pixel對應到哪一個物件
-    public byte[] indexMap; // 用來儲存每個pixel對應到哪一張mask
+    public byte[] panoramaWithMask = new byte[0]; // 帶有mask的panorama
+    public byte[] panorama = new byte[0]; // 一般的panorama
+    public byte[] idMap = new byte[0]; // 用來儲存每個pixel對應到哪一個物件
+    public byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
     public int progress; // 進度條使用
     public string text; 
 }
@@ -78,6 +78,10 @@ public class unityConnect
                 // 解析 json 
                 RecvDataStruct data = JsonUtility.FromJson<RecvDataStruct>(jsonData);
 
+                Debug.Log(data.idMap.Length);
+                Debug.Log(data.indexMap.Length);
+                    
+                
                 // 將收到的data放到GameData中
                 GameData.panoramaWithMaskList.Add(data.panoramaWithMask);
                 GameData.panoramaList.Add(data.panorama);
@@ -85,10 +89,9 @@ public class unityConnect
                 GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap: GameData.indexMap;
                 GameData.progress = data.progress;
                 GameData.text = data.text;
-            
 
                 //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
-                //Debug.Log("Received panorama: " + data.panorama.Length);
+                //Debug.Log("Received panorama: " + data.panorama);
                 //Debug.Log("Received idMap: " + data.idMap);
                 //Debug.Log("Received progress: " + data.progress);
                 //Debug.Log("Received text: " + data.text);

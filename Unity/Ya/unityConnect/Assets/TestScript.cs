@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -22,8 +23,10 @@ public class TestScript : MonoBehaviour
 
     void FixedUpdate()
     {
+      
         tex.LoadImage(GameData.idMap);
         img.texture = tex;
-        Debug.Log(GameData.panoramaList.Count);
+   
+        
     }
 }
