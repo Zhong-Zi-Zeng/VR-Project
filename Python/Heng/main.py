@@ -9,8 +9,10 @@ import yaml
 import json
 import matplotlib
 from typing import Optional
+from Python.YA.pythonConnect import pythonConnect
 from Yolov8 import Yolov8
 from strategies import *
+from MessageHandler import *
 from SegmentAnything import SegmentAnything
 from tools.PanoramaCubemapConverter import PanoramaCubemapConverter
 
@@ -65,15 +67,19 @@ class Main:
 
         logging.info('Now use {} for inference.'.format(device))
 
-    def receive_data(self):
-        """
-            在收到訊息後要做的事情:
-                1. 在剛開始的時候需要回傳VR端現有的照片有甚麼，以及現有的照片名稱(包含副檔名)
-                2. 收到使用者選擇的照片名稱和指定的方法編號
-        """
-        pass
+        self.trans_api = pythonConnect()
+        self.trans_api.listener(self.callback)
 
-    def _check_obj_data(self, method: int, panorama_img_name_ext: str):
+    def callback(self, data, *args, **kwargs):
+        """
+            針對收到的訊息執行對應的工作
+        """
+        if data['text'] == 'Search':
+            Search.handle(self, data, args, kwargs)
+        elif data['text'] == 'Generate':
+            Generate.handle(self, data, args, kwargs)
+
+    def _check_obj_data(self, method: int, panorama_img_name_ext: str) -> List[List[bytes], bytes, bytes]:
         """
             在收到指定的圖片名稱後，先去資料夾下查詢是否已經存在，否則則執行generate_mask後再返回數據
 
@@ -85,10 +91,14 @@ class Main:
                     3: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation，再去做後處理 (尚未完成合併斷掉的mask)
                     4: 將Cubemap和Panoramac都送入Yolo-V8的Segmentation後，再利用SA去refine (已完成，但是最後的mask可能會有重複的狀況)
                 panorama_img_name_ext: 指定的panorama圖片名稱(包含副檔名)
+            Return:
+                [
+                    panorama_with_mask, id_map, label_map
+                ]
         """
         self.method = method
         panorama_img_name = os.path.splitext(panorama_img_name_ext)[0].lower()  # 不包含副檔名的
-        obj_data_directory = os.path.join('id_map', self.method_name[method], panorama_img_name)
+        obj_data_directory = os.path.join('map', self.method_name[method], panorama_img_name)
 
         # 檢查該圖片的mask是否存在在id_map資料夾下
         if not os.path.isdir(obj_data_directory):
@@ -96,22 +106,22 @@ class Main:
             self.generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
 
         # 讀取id_map
-        with open(os.path.join('id_map', self.method_name[method], panorama_img_name, 'id_map.json'), 'r') as file:
-            id_map = json.load(file)
+        id_map = self.trans_api.encode_image(
+            cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'id_map.png')),
+            image_format='.png')
 
-        # 讀取所有圖片
-        panorama_with_mask = [cv2.imread(os.path.join(obj_data_directory, mask_name)) for mask_name in
-                              os.listdir(obj_data_directory) if mask_name != 'id_map.pkl']
+        # 讀取index_map
+        index_map = self.trans_api.encode_image(
+            cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'index_map.png')),
+            image_format='.png')
 
-        # TODO:將所有圖片讀取出後傳送到VR端
+        # 讀取所有masked圖片
+        panorama_with_mask = [
+            self.trans_api.encode_image(cv2.imread(os.path.join(obj_data_directory, mask_name)), image_format='.png')
+            for mask_name in os.listdir(obj_data_directory) if
+            mask_name != 'id_map.png' and mask_name != 'index_map.png']
 
-    def send_data(self):
-        """
-            負責將訊息傳送回VR端
-            1. 影像
-            2. obj_data
-        """
-        pass
+        return [panorama_with_mask, id_map, index_map]
 
     def generate_mask(self,
                       panorama_img: np.ndarray[np.uint8],
@@ -145,5 +155,5 @@ class Main:
 # img = cv2.imread('panorama.png')
 # img = cv2.resize(img, (1024, 512))
 m = Main()
-m._check_obj_data(2, panorama_img_name_ext='panorama.png')
+# m._check_obj_data(2, panorama_img_name_ext='panorama.png')
 # m.generate_mask(img, panorama_img_name='panorama')

@@ -7,68 +7,95 @@ using System.Threading;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
-public class Recv_image_text: MonoBehaviour
+
+//接收的資料型態 
+[SerializeField]
+public class RecvDataStruct
 {
-    Thread receiveThread;
-    TcpClient client;
-    TcpListener listener;
-    int port;
+    public byte[] panoramaWithMask = new byte[0]; // 帶有mask的panorama
+    public byte[] panorama = new byte[0]; // 一般的panorama
+    public byte[] idMap = new byte[0]; // 用來儲存每個pixel對應到哪一個物件
+    public byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
+    public int progress; // 進度條使用
+    public string text; 
+}
 
-    //接收
-    public RawImage img;
-    private byte[] imageDatas = new byte[0];
-    private Texture2D tex;
+//傳輸的資料型態
+[SerializeField]
+public class SendDataStruct 
+{
+    public string task; // 將指定任務傳給Python
+    public string imageName; // User指定的照片名稱
+}
 
-    //傳送
+public class unityConnect
+{
+    //receive
+    private Thread receiveThread;
+    private TcpClient listenClient;
+    private TcpListener listener;
 
-    private void Start()
+    //send
+    private TcpListener reader;
+    private TcpClient readClient;
+
+
+    public unityConnect()
     {
-        InitTcp();
-        tex = new Texture2D(4096, 2048);    //自動偵測圖片大小調整
-    }
+        Debug.Log("TCP Initialized");
 
-    void InitTcp()
-    {
-        port = 7777;
-        print("TCP Initialized");
-        IPEndPoint anyIP = new(IPAddress.Parse("127.0.0.1"), port);
-        listener = new TcpListener(anyIP);
+        // 建立連線
+        IPEndPoint receiveIp = new(IPAddress.Parse("127.0.0.1"), 7777);
+        listener = new TcpListener(receiveIp);
         listener.Start();
 
-        receiveThread = new(new ThreadStart(ReceiveData))
-        {
-            IsBackground = true
-        };
+        IPEndPoint sendIp = new(IPAddress.Parse("127.0.0.1"), 6666);
+        reader = new TcpListener(sendIp);
+        reader.Start();
+
+        //receive
+        receiveThread = new Thread(new ThreadStart(ReceiveData));
+        receiveThread.IsBackground = true;
         receiveThread.Start();
     }
 
-    private void OnDestroy()
-    {
-        receiveThread.Abort();
-    }
 
-    private void ReceiveData()
+    public void ReceiveData()
     {
-        print("received something...");
+        Debug.Log("Receive something...");
         try
         {
             while (true)
             {
-                client = listener.AcceptTcpClient();
-                NetworkStream stream = new(client.Client);
-                StreamReader sr = new(stream);
-
-                string jsonData = sr.ReadToEnd();
-                Debug.Log("Received Data: " + jsonData);
+                listenClient = listener.AcceptTcpClient();
+                NetworkStream recvStream = listenClient.GetStream();
+                StreamReader sr = new(recvStream);
+                
+                string jsonData  = sr.ReadToEnd();
 
                 // 解析 json 
-                Data data = JsonUtility.FromJson<Data>(jsonData);
+                RecvDataStruct data = JsonUtility.FromJson<RecvDataStruct>(jsonData);
 
-                // 顯示 image 和 text
-                imageDatas = data.image;
-                Debug.Log("Received image: " + data.image);
-                Debug.Log("Received text: " + data.text);
+                Debug.Log(data.idMap.Length);
+                Debug.Log(data.indexMap.Length);
+                    
+                
+                // 將收到的data放到GameData中
+                GameData.panoramaWithMaskList.Add(data.panoramaWithMask);
+                GameData.panoramaList.Add(data.panorama);
+                GameData.idMap = data.idMap.Length != 0 ? data.idMap : GameData.idMap;
+                GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap: GameData.indexMap;
+                GameData.progress = data.progress;
+                GameData.text = data.text;
+
+                //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
+                //Debug.Log("Received panorama: " + data.panorama);
+                //Debug.Log("Received idMap: " + data.idMap);
+                //Debug.Log("Received progress: " + data.progress);
+                //Debug.Log("Received text: " + data.text);
+
             }
         }
         catch (Exception e)
@@ -77,29 +104,24 @@ public class Recv_image_text: MonoBehaviour
         }
     }
 
-    public void SendData(float number)
-    {
-        try
-        {
-            
-        }
-        catch (Exception e)
-        {
-            Debug.Log(e);
-        }
-    }
+    public void SendData(string task, string imageName="")
+    {        
+        Debug.Log("Send data");
 
-    public class Data
-    {
-        public byte[] image;
-        public string text;
-    }
+        SendDataStruct sendData = new SendDataStruct
+        {
+            task = task,
+            imageName = imageName
+        };
+        
+        readClient = reader.AcceptTcpClient();
+        NetworkStream sendStream = readClient.GetStream();
+        StreamWriter sw = new(sendStream);
 
-    private void FixedUpdate()  
-    {
-        tex.LoadImage(imageDatas);
-        img.texture = tex;
-        //Debug.Log(tex.height);
-        //Debug.Log(tex.width);
+        // 傳送給python
+        string jsonToSend = JsonUtility.ToJson(sendData);
+        sw.Write(jsonToSend);
+        sw.Flush();
+        Debug.Log("Sended");        
     }
 }
