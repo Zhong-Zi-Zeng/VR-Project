@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import logging
 from threading import Thread
+from typing import Optional
 
 
 class pythonConnect:
@@ -25,13 +26,25 @@ class pythonConnect:
         assert image_format in ['.jpg', '.png'], 'The image\'s format was wrong.'
         return cv2.imencode(f'.{image_format}', image)[1].ravel().tolist()
 
-    def send_data_to_unity(self, image=None, text=None):
+    def send_data_to_unity(self,
+                           panorama_with_mask: Optional[bytes] = None,
+                           panorama: Optional[bytes] = None,
+                           id_map: Optional[bytes] = None,
+                           index_map: Optional[bytes] = None,
+                           progress: Optional[int] = None,
+                           text: Optional[str] = None
+                           ):
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.TCP_IP, self.send_port))
 
         data = {
-            'text': text,
-            'image': image
+            'panoramaWithMask': panorama_with_mask,
+            'panorama': panorama,
+            'idMap': id_map,
+            'indexMap:': index_map,
+            'progress': progress,
+            'text': text
         }
 
         # 傳送給unity
@@ -42,6 +55,7 @@ class pythonConnect:
         logging.info('Data sent to Unity')
 
     def listener(self, callback, *args, **kwargs):
+        assert callable(callback), 'The callback function is not callable.'
         logging.info('start listen')
 
         while True:
@@ -57,9 +71,9 @@ if __name__ == '__main__':
     python_connector = pythonConnect()
 
     # 傳送格式
-    image = python_connector.encode_image(cv2.imread('panorama.png'), image_format='.png')
+    panorama = python_connector.encode_image(cv2.imread('panorama.png'), image_format='.png')
     id_map = python_connector.encode_image(cv2.imread('id_map.png'), image_format='.png')
     text_data = "Hello, this is some text."
 
-    Thread(target=python_connector.send_data_to_unity, kwargs={"image": image, 'text': text_data}).start()
+    Thread(target=python_connector.send_data_to_unity, kwargs={"image": panorama, 'text': text_data}).start()
 #     Thread(target=python_connector.receive_data_from_unity).start()

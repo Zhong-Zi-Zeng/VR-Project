@@ -9,47 +9,44 @@ using System.IO;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 
-public class unityConnect : MonoBehaviour
+
+//接收的資料型態 
+[SerializeField]
+public class RecvDataStruct
+{
+    public byte[] panoramaWithMask; // 帶有mask的panorama
+    public byte[] panorama; // 一般的panorama
+    public byte[] idMap; // 用來儲存每個pixel對應到哪一個物件
+    public byte[] indexMap; // 用來儲存每個pixel對應到哪一張mask
+    public int progress; // 進度條使用
+    public string text; 
+}
+
+//傳輸的資料型態
+[SerializeField]
+public class SendDataStruct 
+{
+    public string task; // 將指定任務傳給Python
+    public string imageName; // User指定的照片名稱
+}
+
+public class unityConnect
 {
     //receive
     private Thread receiveThread;
-    private TcpClient client;
+    private TcpClient listenClient;
     private TcpListener listener;
 
     //send
-    private Thread sendThread;
     private TcpListener reader;
-    private TcpClient client_2;
+    private TcpClient readClient;
 
-    public RawImage img;
-    private byte[] imageDatas = new byte[0];
-    private Texture2D tex;
-    public Button yourButton;
 
-    void Start()
+    public unityConnect()
     {
-        InitTcp();
+        Debug.Log("TCP Initialized");
 
-        //receive
-        tex = new Texture2D(4096, 2048);    //自動調整圖片大小
-        receiveThread = new Thread(new ThreadStart(ReceiveData));
-        receiveThread.IsBackground = true;
-        receiveThread.Start();
-
-        //send
-        sendThread = new Thread(new ThreadStart(SendData));
-        sendThread.IsBackground = true;
-        sendThread.Start();
-
-        //Button btn = yourButton.GetComponent<Button>();
-        //btn.onClick.AddListener(this.SendData);
-    }
-
-
-    void InitTcp()
-    {
-        print("TCP Initialized");
-
+        // 建立連線
         IPEndPoint receiveIp = new(IPAddress.Parse("127.0.0.1"), 7777);
         listener = new TcpListener(receiveIp);
         listener.Start();
@@ -57,36 +54,44 @@ public class unityConnect : MonoBehaviour
         IPEndPoint sendIp = new(IPAddress.Parse("127.0.0.1"), 6666);
         reader = new TcpListener(sendIp);
         reader.Start();
+
+        //receive
+        receiveThread = new Thread(new ThreadStart(ReceiveData));
+        receiveThread.IsBackground = true;
+        receiveThread.Start();
     }
 
-    private void OnDestroy()
-    {
-        receiveThread.Abort();
-    }
 
-    private void ReceiveData()
+    public void ReceiveData()
     {
-        print("received something...");
+        Debug.Log("Receive something...");
         try
         {
             while (true)
             {
-                client = listener.AcceptTcpClient();
-                NetworkStream recvStream = client.GetStream();
+                listenClient = listener.AcceptTcpClient();
+                NetworkStream recvStream = listenClient.GetStream();
                 StreamReader sr = new(recvStream);
                 
                 string jsonData  = sr.ReadToEnd();
 
                 // 解析 json 
-                SendDataStruct data = JsonUtility.FromJson<SendDataStruct>(jsonData);
+                RecvDataStruct data = JsonUtility.FromJson<RecvDataStruct>(jsonData);
 
-                imageDatas = data.image;
-                Debug.Log("Received image: " + data.image);
-                //Debug.Log("Received H: " + data.h);
-                //Debug.Log("Received W: " + data.w);
+                // 將收到的data放到GameData中
+                GameData.panoramaWithMaskList.Add(data.panoramaWithMask);
+                GameData.panoramaList.Add(data.panorama);
+                GameData.idMap = data.idMap.Length != 0 ? data.idMap : GameData.idMap;
+                GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap: GameData.indexMap;
+                GameData.progress = data.progress;
+                GameData.text = data.text;
+            
+
+                //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
+                //Debug.Log("Received panorama: " + data.panorama.Length);
+                //Debug.Log("Received idMap: " + data.idMap);
+                //Debug.Log("Received progress: " + data.progress);
                 //Debug.Log("Received text: " + data.text);
-
-
 
             }
         }
@@ -96,52 +101,24 @@ public class unityConnect : MonoBehaviour
         }
     }
 
-    public void SendData()
-    {
-        while (true)
+    public void SendData(string task, string imageName="")
+    {        
+        Debug.Log("Send data");
+
+        SendDataStruct sendData = new SendDataStruct
         {
-            Debug.Log("SendData");
-            Thread.Sleep(5000);
+            task = task,
+            imageName = imageName
+        };
+        
+        readClient = reader.AcceptTcpClient();
+        NetworkStream sendStream = readClient.GetStream();
+        StreamWriter sw = new(sendStream);
 
-            client_2 = reader.AcceptTcpClient();
-            NetworkStream sendStream = client_2.GetStream();
-            StreamWriter sw = new(sendStream);
-
-            RecvDataStruct sendData = new()
-            {
-                parameter = 123,  // 要傳的參數
-                text = "generate"
-            };
-            string jsonToSend = JsonUtility.ToJson(sendData);
-            sw.Write(jsonToSend);
-            sw.Flush();
-            Debug.Log("Sended");
-        }
-    }
-    //receive
-    [SerializeField]
-    public class SendDataStruct
-    {
-        public List<string> id_map;
-        public string h;
-        public string w;
-        public byte[] image;
-        public string text;
-    }
-
-    //send
-    [SerializeField]
-    public class RecvDataStruct
-    {
-        public int parameter;
-        public string text;
-    }
-
-    private void FixedUpdate()  
-    {
-        tex.LoadImage(imageDatas);
-        img.texture = tex;
-        //Debug.Log(tex.height);
-        //Debug.Log(tex.width);
+        // 傳送給python
+        string jsonToSend = JsonUtility.ToJson(sendData);
+        sw.Write(jsonToSend);
+        sw.Flush();
+        Debug.Log("Sended");        
     }
 }

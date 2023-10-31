@@ -68,18 +68,24 @@ class Main:
         logging.info('Now use {} for inference.'.format(device))
 
         self.trans_api = pythonConnect()
-        self.trans_api.listener(self.callback)
+
+        panorama_with_mask, id_map, index_map = self._check_obj_data(2, panorama_img_name_ext='panorama.png')
+        # for i in range(2):
+        self.trans_api.send_data_to_unity(id_map=id_map)
+        self.trans_api.send_data_to_unity(index_map=index_map)
+
+        # self.trans_api.listener(self.callback)
 
     def callback(self, data, *args, **kwargs):
         """
             針對收到的訊息執行對應的工作
         """
-        if data['text'] == 'search':
+        if data['text'] == 'Search':
             Search.handle(self, data, args, kwargs)
-        elif data['text'] == 'generate':
+        elif data['text'] == 'Generate':
             Generate.handle(self, data, args, kwargs)
 
-    def _check_obj_data(self, method: int, panorama_img_name_ext: str) -> List[List[bytes], bytes]:
+    def _check_obj_data(self, method: int, panorama_img_name_ext: str) -> List[List[bytes], bytes, bytes]:
         """
             在收到指定的圖片名稱後，先去資料夾下查詢是否已經存在，否則則執行generate_mask後再返回數據
 
@@ -93,12 +99,12 @@ class Main:
                 panorama_img_name_ext: 指定的panorama圖片名稱(包含副檔名)
             Return:
                 [
-                    panorama_with_mask, id_map
+                    panorama_with_mask, id_map, label_map
                 ]
         """
         self.method = method
         panorama_img_name = os.path.splitext(panorama_img_name_ext)[0].lower()  # 不包含副檔名的
-        obj_data_directory = os.path.join('id_map', self.method_name[method], panorama_img_name)
+        obj_data_directory = os.path.join('map', self.method_name[method], panorama_img_name)
 
         # 檢查該圖片的mask是否存在在id_map資料夾下
         if not os.path.isdir(obj_data_directory):
@@ -107,15 +113,21 @@ class Main:
 
         # 讀取id_map
         id_map = self.trans_api.encode_image(
-            cv2.imread(os.path.join('id_map', self.method_name[method], panorama_img_name, 'id_map.png')),
+            cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'id_map.png')),
+            image_format='.png')
+
+        # 讀取index_map
+        index_map = self.trans_api.encode_image(
+            cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'index_map.png')),
             image_format='.png')
 
         # 讀取所有masked圖片
         panorama_with_mask = [
             self.trans_api.encode_image(cv2.imread(os.path.join(obj_data_directory, mask_name)), image_format='.png')
-            for mask_name in os.listdir(obj_data_directory) if mask_name != 'id_map.png']
+            for mask_name in os.listdir(obj_data_directory) if
+            mask_name != 'id_map.png' and mask_name != 'index_map.png']
 
-        return [panorama_with_mask, id_map]
+        return [panorama_with_mask, id_map, index_map]
 
     def generate_mask(self,
                       panorama_img: np.ndarray[np.uint8],

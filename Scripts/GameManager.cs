@@ -24,9 +24,11 @@ public class SceneName
 
 public class GameData
 {
-    public static string image_name;
-    public static string id_map;
-    public static int percentage;
+    public List<byte[]> panoramaWithMask; // 帶有mask的panorama
+    public List<byte[]> panorama; // 一般的panorama
+    public byte[] idMap; // id map
+    public int progress; // 進度條使用
+    public string text;
 }
 
 public class GameManager
