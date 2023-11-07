@@ -61,6 +61,7 @@ class pythonConnect:
         while True:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.TCP_IP, self.receive_port))
+
             data = sock.recv(1024)  # 可更改buffer大小
             recv_dict = json.loads(data.decode('utf-8'))
             callback(recv_dict, *args, **kwargs)
@@ -77,4 +78,4 @@ if __name__ == '__main__':
 
     Thread(target=python_connector.send_data_to_unity, kwargs={"id_map": id_map, 'text': text_data}).start()
     Thread(target=python_connector.send_data_to_unity, kwargs={"panorama": panorama, 'text': text_data}).start()
-#     Thread(target=python_connector.receive_data_from_unity).start()
+    #Thread(target=python_connector.receive_data_from_unity).start()
