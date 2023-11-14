@@ -9,11 +9,11 @@ EditorBuildSettings:
     path: Assets/Scenes/InGameScene.unity
     guid: 25924ce0844505d44b69eb580f3a4b07
   - enabled: 1
-    path: Assets/Scenes/InitialScene.unity
-    guid: dbbc34ebc73c57a449cec4a41fd3a968
-  - enabled: 1
     path: Assets/Scenes/BeginScene.unity
     guid: 05fed8b9f5cf6ff49aee983ffe19f15c
+  - enabled: 1
+    path: Assets/Scenes/InitialScene.unity
+    guid: dbbc34ebc73c57a449cec4a41fd3a968
   - enabled: 1
     path: Assets/Scenes/WaitingPythonScene.unity
     guid: ed2a47d9f4929a84693232c4e8595b74

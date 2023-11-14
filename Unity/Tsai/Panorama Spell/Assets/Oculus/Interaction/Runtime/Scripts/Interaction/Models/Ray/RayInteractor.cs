@@ -80,7 +80,7 @@ namespace Oculus.Interaction
             this.AssertField(Selector, nameof(Selector));
             this.AssertField(_rayOrigin, nameof(_rayOrigin));
         }
-
+         
         protected override void DoPreprocess()
         {
             Origin = _rayOrigin.transform.position;
