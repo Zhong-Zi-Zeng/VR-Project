@@ -34,7 +34,6 @@ class pythonConnect:
                            progress: Optional[int] = None,
                            text: Optional[str] = None
                            ):
-
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.TCP_IP, self.send_port))
 
@@ -74,8 +73,9 @@ if __name__ == '__main__':
     # 傳送格式
     panorama = python_connector.encode_image(cv2.imread('panorama.png'), image_format='.png')
     id_map = python_connector.encode_image(cv2.imread('id_map.png'), image_format='.png')
+    index_map = python_connector.encode_image(cv2.imread('index_map.png'), image_format='.png')
     text_data = "Hello, this is some text."
 
-    Thread(target=python_connector.send_data_to_unity, kwargs={"id_map": id_map, 'text': text_data}).start()
-    Thread(target=python_connector.send_data_to_unity, kwargs={"panorama": panorama, 'text': text_data}).start()
-    #Thread(target=python_connector.receive_data_from_unity).start()
+    Thread(target=python_connector.send_data_to_unity,
+           kwargs={"id_map": id_map, 'text': text_data, 'indexMap': index_map}).start()
+    # Thread(target=python_connector.receive_data_from_unity).start()
