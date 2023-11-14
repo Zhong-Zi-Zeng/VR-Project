@@ -38,8 +38,8 @@ public class unityConnect
     private TcpListener listener;
 
     //send
-    private TcpListener reader;
     private TcpClient readClient;
+    private TcpListener reader;
 
 
     public unityConnect()
@@ -90,12 +90,11 @@ public class unityConnect
                 GameData.progress = data.progress;
                 GameData.text = data.text;
 
-                //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
-                //Debug.Log("Received panorama: " + data.panorama);
-                //Debug.Log("Received idMap: " + data.idMap);
-                //Debug.Log("Received progress: " + data.progress);
-                //Debug.Log("Received text: " + data.text);
-
+                Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
+                Debug.Log("Received panorama: " + data.panorama);
+                Debug.Log("Received idMap: " + data.idMap);
+                Debug.Log("Received progress: " + data.progress);
+                Debug.Log("Received text: " + data.text);
             }
         }
         catch (Exception e)
