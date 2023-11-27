@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(LineRenderer))]
 public class EyeTrackingRay : MonoBehaviour
@@ -25,7 +26,7 @@ public class EyeTrackingRay : MonoBehaviour
     
     private Transform newTransform;
     public Material targetMaterial;
- 
+
     private Dictionary<string, string> cubemapDictionary = new Dictionary<string, string>
     {
         { "Cube (1)", "panoramawithmask/48" },
@@ -195,10 +196,12 @@ public class EyeTrackingRay : MonoBehaviour
             y = h - ((2 * phi + Mathf.PI) * h) / (2 * Mathf.PI);
 
             colorInfoText.text = $"Eye Reflection Hit Position: U: {x}, V: {y}";
-           
+            
+
         }
         //idmap
         GameData.idMapTexture = Resources.Load<Texture2D>("id_map");
+    
         Color id_pixelColor = GameData.idMapTexture.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
         
 

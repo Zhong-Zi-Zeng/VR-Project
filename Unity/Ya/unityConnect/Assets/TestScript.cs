@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.UI;
-using static System.Net.Mime.MediaTypeNames;
 
 public class TestScript : MonoBehaviour
 {
@@ -18,10 +18,10 @@ public class TestScript : MonoBehaviour
         // 傳輸使用的接口
         trans_api = new unityConnect();
         tex = new Texture2D(4096, 2048);
-
+        GameManager.AddAllStates();
     }
 
-    void FixedUpdate()
+    void Update()
     {
       
         tex.LoadImage(GameData.idMap);

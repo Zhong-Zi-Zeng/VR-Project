@@ -74,6 +74,6 @@ public class PanoramahManager : MonoBehaviour
     public void LoadScene()
     {
         // 加載目標場景
-        SceneManager.LoadScene(1, LoadSceneMode.Single);
+        SceneManager.LoadScene(2, LoadSceneMode.Single);
     }
 }

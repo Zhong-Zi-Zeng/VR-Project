@@ -11,7 +11,7 @@ public class InGameState : StateBase
         Debug.Log("Now in the InGameState:");
 
         // ¥ý¸ü¤JScene
-        SceneManager.LoadScene(StateId.InGameState);
+        SceneManager.LoadScene(SceneName.InGameScene);
 
     }
 

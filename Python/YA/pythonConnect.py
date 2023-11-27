@@ -41,7 +41,7 @@ class pythonConnect:
             'panoramaWithMask': panorama_with_mask,
             'panorama': panorama,
             'idMap': id_map,
-            'indexMap:': index_map,
+            'indexMap': index_map,
             'progress': progress,
             'text': text
         }
@@ -77,5 +77,5 @@ if __name__ == '__main__':
     text_data = "Hello, this is some text."
 
     Thread(target=python_connector.send_data_to_unity,
-           kwargs={"id_map": id_map, 'text': text_data, 'indexMap': index_map}).start()
+           kwargs={"id_map": id_map, 'text': text_data, 'index_map': index_map}).start()
     # Thread(target=python_connector.receive_data_from_unity).start()

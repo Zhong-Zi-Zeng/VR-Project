@@ -26,9 +26,9 @@ public class GameData
 {
     public static List<byte[]> panoramaWithMaskList = new(); // 帶有mask的panorama
     public static List<byte[]> panoramaList = new(); // 一般的panorama，存放python有的panorama照片
-    // public static byte[] idMap = new byte[0];  用來儲存每個pixel對應到哪一個物件
+    public static byte[] idMap = new byte[0]; //用來儲存每個pixel對應到哪一個物件
     public static Texture2D idMapTexture;
-    //public static byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
+    public static byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
     public static Texture2D indexMapTexture;
     public static int progress; // 進度條使用
     public static string text;
@@ -37,12 +37,11 @@ public class GameData
 public class GameManager
 {
     private static FSM fsm = new();
-
     /// <summary>
     /// 把所有狀態加入到fsm中
     /// </summary>
     public static void AddAllStates()
-    {
+    {        
         fsm.AddState(new BeginState());
         fsm.AddState(new WaitingPythonState());
         fsm.AddState(new InGameState());
