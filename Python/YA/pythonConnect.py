@@ -1,4 +1,5 @@
 # Client
+from __future__ import annotations
 import socket
 import json
 import cv2
@@ -27,13 +28,14 @@ class pythonConnect:
         return cv2.imencode(f'.{image_format}', image)[1].ravel().tolist()
 
     def send_data_to_unity(self,
-                           panorama_with_mask: Optional[bytes] = None,
-                           panorama: Optional[bytes] = None,
-                           id_map: Optional[bytes] = None,
-                           index_map: Optional[bytes] = None,
+                           panorama_with_mask: Optional[list[int]] = None,
+                           panorama: Optional[list[int]] = None,
+                           id_map: Optional[list[int]] = None,
+                           index_map: Optional[list[int]] = None,
                            progress: Optional[int] = None,
                            text: Optional[str] = None
                            ):
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.TCP_IP, self.send_port))
 
@@ -41,7 +43,7 @@ class pythonConnect:
             'panoramaWithMask': panorama_with_mask,
             'panorama': panorama,
             'idMap': id_map,
-            'indexMap:': index_map,
+            'indexMap': index_map,
             'progress': progress,
             'text': text
         }
@@ -63,6 +65,9 @@ class pythonConnect:
 
             data = sock.recv(1024)  # 可更改buffer大小
             recv_dict = json.loads(data.decode('utf-8'))
+            logging.info('Receive data from unity')
+            logging.info(recv_dict)
+
             callback(recv_dict, *args, **kwargs)
 
 
@@ -77,5 +82,5 @@ if __name__ == '__main__':
     text_data = "Hello, this is some text."
 
     Thread(target=python_connector.send_data_to_unity,
-           kwargs={"id_map": id_map, 'text': text_data, 'indexMap': index_map}).start()
+           kwargs={"id_map": id_map, 'text': text_data, 'index_map': index_map}).start()
     # Thread(target=python_connector.receive_data_from_unity).start()

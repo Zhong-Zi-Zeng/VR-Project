@@ -103,9 +103,8 @@ class Yolov8:
             H, W = img.shape[:2]
 
         results = self.seg_model.predict(img, imgsz=(H, W), retina_masks=True)
-        masks = [result.masks.data.cpu().numpy() for result in results]
-
-        cls = [result.boxes.cls.cpu().numpy() for result in results]
-        bbox = [result.boxes.xyxy.cpu().numpy() for result in results]
+        masks = [result.masks.data.cpu().numpy() for result in results if result.masks is not None]
+        cls = [result.boxes.cls.cpu().numpy() for result in results if result.boxes is not None]
+        bbox = [result.boxes.xyxy.cpu().numpy() for result in results if result.boxes is not None]
 
         return masks, bbox, cls
