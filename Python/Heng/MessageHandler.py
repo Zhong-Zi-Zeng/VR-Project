@@ -1,3 +1,7 @@
+from pathlib import Path
+import os
+import cv2
+
 class Search:
     """
          將material資料夾下的所有照片和名稱都傳送給unity
@@ -7,9 +11,13 @@ class Search:
             3. progress
     """
     @staticmethod
-    def handle(main, data, args, kwargs):
-        print('Search')
-
+    def handle(main, data, *args, **kwargs):
+        for image_name in os.listdir('./material'):
+            image = main.trans_api.encode_image(
+                cv2.imread(os.path.join('./material', image_name)),
+                image_format=Path(image_name).suffix
+            )
+            main.trans_api.send_data_to_unity(panorama=image, text=image_name)
 
 class Generate:
     """
@@ -17,10 +25,15 @@ class Generate:
          Send:
             1. panorama image with mask
             2. id_map
-            3. progress
+            3. index_map
+            4. progress
     """
     @staticmethod
-    def handle(main, data, args, kwargs):
-        print('Generate')
+    def handle(main, data, *args, **kwargs):
+        panorama_img_name_ext = data['imageName']
+        panorama_with_mask, id_map, index_map = main.check_obj_data(panorama_img_name_ext)
 
-
+        main.trans_api.send_data_to_unity(id_map=id_map)
+        main.trans_api.send_data_to_unity(index_map=index_map)
+        for mask_img in panorama_with_mask:
+            main.trans_api.send_data_to_unity(panorama_with_mask=mask_img)

@@ -1,4 +1,5 @@
 # Client
+from __future__ import annotations
 import socket
 import json
 import cv2
@@ -27,13 +28,14 @@ class pythonConnect:
         return cv2.imencode(f'.{image_format}', image)[1].ravel().tolist()
 
     def send_data_to_unity(self,
-                           panorama_with_mask: Optional[bytes] = None,
-                           panorama: Optional[bytes] = None,
-                           id_map: Optional[bytes] = None,
-                           index_map: Optional[bytes] = None,
+                           panorama_with_mask: Optional[list[int]] = None,
+                           panorama: Optional[list[int]] = None,
+                           id_map: Optional[list[int]] = None,
+                           index_map: Optional[list[int]] = None,
                            progress: Optional[int] = None,
                            text: Optional[str] = None
                            ):
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.TCP_IP, self.send_port))
 
@@ -63,6 +65,9 @@ class pythonConnect:
 
             data = sock.recv(1024)  # 可更改buffer大小
             recv_dict = json.loads(data.decode('utf-8'))
+            logging.info('Receive data from unity')
+            logging.info(recv_dict)
+
             callback(recv_dict, *args, **kwargs)
 
 

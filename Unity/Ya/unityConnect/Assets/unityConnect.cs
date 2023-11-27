@@ -64,7 +64,6 @@ public class unityConnect
 
     public void ReceiveData()
     {
-        Debug.Log("Receive something...");
         try
         {
             while (true)
@@ -72,29 +71,32 @@ public class unityConnect
                 listenClient = listener.AcceptTcpClient();
                 NetworkStream recvStream = listenClient.GetStream();
                 StreamReader sr = new(recvStream);
-                
+                Debug.Log("Receive something...");
+
                 string jsonData  = sr.ReadToEnd();
 
                 // 解析 json 
                 RecvDataStruct data = JsonUtility.FromJson<RecvDataStruct>(jsonData);
-
-                Debug.Log(data.idMap.Length);
-                Debug.Log(data.indexMap.Length);
-                    
                 
                 // 將收到的data放到GameData中
-                GameData.panoramaWithMaskList.Add(data.panoramaWithMask);
-                GameData.panoramaList.Add(data.panorama);
+                if (data.panoramaWithMask.Length != 0)
+                {
+                    GameData.panoramaWithMaskList.Add(data.panoramaWithMask);
+                }
+                if (data.panorama.Length != 0)
+                {
+                    GameData.panoramaList.Add(data.panorama);
+                }
                 GameData.idMap = data.idMap.Length != 0 ? data.idMap : GameData.idMap;
                 GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap: GameData.indexMap;
                 GameData.progress = data.progress;
                 GameData.text = data.text;
 
-                Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
-                Debug.Log("Received panorama: " + data.panorama);
-                Debug.Log("Received idMap: " + data.idMap);
-                Debug.Log("Received progress: " + data.progress);
-                Debug.Log("Received text: " + data.text);
+                //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
+                //Debug.Log("Received panorama: " + data.panorama);
+                //Debug.Log("Received idMap: " + data.idMap);
+                //Debug.Log("Received progress: " + data.progress);
+                //Debug.Log("Received text: " + data.text);
             }
         }
         catch (Exception e)
@@ -105,7 +107,7 @@ public class unityConnect
 
     public void SendData(string task, string imageName="")
     {        
-        Debug.Log("Send data");
+        Debug.Log("Send data to python");
 
         SendDataStruct sendData = new SendDataStruct
         {

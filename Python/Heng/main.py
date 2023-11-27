@@ -18,7 +18,6 @@ from tools.PanoramaCubemapConverter import PanoramaCubemapConverter
 
 logging.basicConfig(level=logging.INFO)
 
-
 class Main:
     def __init__(self,
                  yolov8_obj_model_type: str = 'yolov8x',
@@ -74,16 +73,17 @@ class Main:
         """
             針對收到的訊息執行對應的工作
         """
-        if data['text'] == 'Search':
+        if data['task'] == 'Search':
             Search.handle(self, data, args, kwargs)
-        elif data['text'] == 'Generate':
+        elif data['task'] == 'Generate':
             Generate.handle(self, data, args, kwargs)
 
-    def _check_obj_data(self, method: int, panorama_img_name_ext: str) -> List[List[bytes], bytes, bytes]:
+    def check_obj_data(self, panorama_img_name_ext: str, method: int = 2) -> List[List[bytes], bytes, bytes]:
         """
             在收到指定的圖片名稱後，先去資料夾下查詢是否已經存在，否則則執行generate_mask後再返回數據
 
             Args:
+
                 method: mask執行方法，目前可選擇4 [0, 1, 2, 3]
                     0: 直接將每一個Cubemap 送入Yolo-V8的Segmentation (尚未完成合併斷掉的mask)
                     1: 直接將每一個Cubemap 送入Yolo-V8的Object detection後再送入SA (尚未完成合併斷掉的mask)
@@ -103,7 +103,7 @@ class Main:
         # 檢查該圖片的mask是否存在在id_map資料夾下
         if not os.path.isdir(obj_data_directory):
             panorama_img = cv2.imread(os.path.join('material', panorama_img_name_ext))
-            self.generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
+            self._generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
 
         # 讀取id_map
         id_map = self.trans_api.encode_image(
@@ -123,9 +123,9 @@ class Main:
 
         return [panorama_with_mask, id_map, index_map]
 
-    def generate_mask(self,
-                      panorama_img: np.ndarray[np.uint8],
-                      panorama_img_name: str):
+    def _generate_mask(self,
+                       panorama_img: np.ndarray[np.uint8],
+                       panorama_img_name: str):
 
         if self.method == 0:
             mask_generator = CubemapYoloSegmentation(yolov8=self.yolov8,
@@ -152,8 +152,9 @@ class Main:
         mask_generator.generate_mask(panorama_img, panorama_img_name)
 
 
-# img = cv2.imread('panorama.png')
+# img = cv2.imread('./material/panorama.png')
 # img = cv2.resize(img, (1024, 512))
 m = Main()
+# m.check_obj_data(panorama_img_name_ext="panorama.png")
 # m._check_obj_data(2, panorama_img_name_ext='panorama.png')
 # m.generate_mask(img, panorama_img_name='panorama')
