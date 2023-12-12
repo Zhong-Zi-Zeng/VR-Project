@@ -12,7 +12,8 @@ public class Initial : MonoBehaviour
 
     void Start()
     {
+        trans_api.SendData("Search");
         GameManager.AddAllStates();
-        GameManager.ChangeState(StateId.InGameState);
+        GameManager.ChangeState(StateId.BeginState);
     }
 }

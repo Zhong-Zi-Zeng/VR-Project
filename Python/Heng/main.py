@@ -9,7 +9,7 @@ import yaml
 import json
 import matplotlib
 from typing import Optional
-from Python.YA.pythonConnect import pythonConnect
+from pythonConnect import pythonConnect
 from Yolov8 import Yolov8
 from strategies import *
 from MessageHandler import *
