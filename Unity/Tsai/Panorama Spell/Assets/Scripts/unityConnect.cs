@@ -14,10 +14,10 @@ using Unity.VisualScripting;
 [SerializeField]
 public class RecvDataStruct
 {
-    public byte[] panoramaWithMask = new byte[0]; // 帶有mask的panorama
-    public byte[] panorama = new byte[0]; // 一般的panorama
-    public byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
-    public byte[] idMap = new byte[0]; // 用來儲存每個pixel對應到哪一個物件
+    public byte[] panoramaWithMask; // 帶有mask的panorama
+    public byte[] panorama; // 一般的panorama
+    public byte[] indexMap; // 用來儲存每個pixel對應到哪一張mask
+    public byte[] idMap; // 用來儲存每個pixel對應到哪一個物件
     public int progress; // 進度條使用
     public string text; 
 }
@@ -30,28 +30,29 @@ public class SendDataStruct
     public string imageName; // User指定的照片名稱
 }
 
-public class unityConnect
+public static class unityConnect
 {
     //receive
-    private Thread receiveThread;
-    private TcpClient listenClient;
-    private TcpListener listener;
+    private static Thread receiveThread;
+    private static TcpClient listenClient;
+    private static TcpListener listener;
 
     //send
-    private TcpClient readClient;
-    private TcpListener reader;
+    private static TcpClient readClient;
+    private static TcpListener reader;
 
-
-    public unityConnect()
+    public static void build()
     {
         Debug.Log("TCP Initialized");
 
         // 建立連線
         IPEndPoint receiveIp = new(IPAddress.Parse("127.0.0.1"), 7777);
+        //IPEndPoint receiveIp = new(IPAddress.Parse("0.0.0.0"), 7777);
         listener = new TcpListener(receiveIp);
         listener.Start();
         //192.168.1.10
         IPEndPoint sendIp = new(IPAddress.Parse("127.0.0.1"), 6666);
+        //IPEndPoint sendIp = new(IPAddress.Parse("0.0.0.0"), 6666);
         reader = new TcpListener(sendIp);
         reader.Start();
 
@@ -62,7 +63,7 @@ public class unityConnect
     }
 
 
-    public void ReceiveData()
+    public static void ReceiveData()
     {
         try
         {
@@ -101,9 +102,10 @@ public class unityConnect
         {
             Debug.Log(e);
         }
+
     }
 
-    public void SendData(string task, string imageName="")
+    public static void SendData(string task, string imageName="")
     {        
         Debug.Log("Send data");
 

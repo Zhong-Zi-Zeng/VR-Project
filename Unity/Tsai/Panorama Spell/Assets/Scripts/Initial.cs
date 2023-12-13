@@ -8,11 +8,16 @@ using UnityEngine;
 /// </summary>
 public class Initial : MonoBehaviour
 {
-    public static unityConnect trans_api = new();
-
+    //public static unityConnect trans_api = new();
+    
+   
     void Start()
     {
-        trans_api.SendData("Search");
+        Debug.Log("21312312313");
+
+        unityConnect.build();
+        unityConnect.SendData("Search");
+
         GameManager.AddAllStates();
         GameManager.ChangeState(StateId.BeginState);
     }

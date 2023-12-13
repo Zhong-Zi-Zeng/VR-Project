@@ -11,17 +11,18 @@ from typing import Optional
 
 class pythonConnect:
     def __init__(self, TCP_IP='127.0.0.1'):
+    # def __init__(self, TCP_IP='192.168.1.10'):
         self.TCP_IP = TCP_IP
 
-        self.send_port = 7777
         self.receive_port = 6666
+        self.send_port = 7777
 
     @staticmethod
     def encode_image(image: np.ndarray, image_format: str):
         """
             將照片轉換成bytes
         :param image: np.ndarray
-        :param image_format: 可以為'.jpg' or '.png'
+        :param image_format: 可以為'.jpg' or '.png'c
         :return: 被encode的image
         """
         assert image_format in ['.jpg', '.png'], 'The image\'s format was wrong.'
@@ -38,7 +39,7 @@ class pythonConnect:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.TCP_IP, self.send_port))
-
+        
         data = {
             'panoramaWithMask': panorama_with_mask,
             'panorama': panorama,

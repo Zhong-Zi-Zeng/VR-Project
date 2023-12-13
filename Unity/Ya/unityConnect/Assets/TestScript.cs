@@ -10,12 +10,18 @@ using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
 public class TestScript : MonoBehaviour
 {
-    private unityConnect trans_api;
+    //private unityConnect trans_api;
 
-    public RawImage img_1;
-    public RawImage img_2;
-    Texture2D tex_1;
-    Texture2D tex_2;
+    public RawImage rawImage;
+    public RawImage rawImage1;
+    public RawImage rawImage2;
+    public RawImage rawImage3;
+    public RawImage rawImage4;
+    public RawImage rawImage5;
+
+    Texture2D tex;
+    Texture2D tex2;
+    
     private bool flag = false;
 
     void Start()
@@ -37,11 +43,11 @@ public class TestScript : MonoBehaviour
             img_2.texture = tex_2;
         }
 
-        if (Input.GetKey(KeyCode.Q) && flag == false)
-        {
-            flag = true;
-            trans_api.SendData("Generate", "panorama2.jpg");
-        }
+        //if (Input.GetKey(KeyCode.Q) && flag == false)
+        //{
+        //    flag = true;
+        //    trans_api.SendData("Generate", "panorama2.jpg");
+        //}
 
         Debug.Log(GameData.panoramaWithMaskList.Count);
     }

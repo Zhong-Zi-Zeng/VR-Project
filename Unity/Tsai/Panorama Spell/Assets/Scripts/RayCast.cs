@@ -194,7 +194,7 @@ public class Raycast4 : MonoBehaviour
             x = ((theta + Mathf.PI) * w) / (2 * Mathf.PI);
             y = h - ((2 * phi + Mathf.PI) * h) / (2 * Mathf.PI);
 
-            colorInfoText.text = $"Hand Reflection Hit Position: U: {x}, V: {y}";
+            //colorInfoText.text = $"Hand Reflection Hit Position: U: {x}, V: {y}";
 
 
         }
