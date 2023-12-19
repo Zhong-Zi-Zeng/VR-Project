@@ -10,8 +10,8 @@ from typing import Optional
 
 
 class pythonConnect:
-    def __init__(self, TCP_IP='127.0.0.1'):
-    # def __init__(self, TCP_IP='192.168.1.10'):
+    # def __init__(self, TCP_IP='127.0.0.1'):
+    def __init__(self, TCP_IP='192.168.1.10'):
         self.TCP_IP = TCP_IP
 
         self.receive_port = 6666
