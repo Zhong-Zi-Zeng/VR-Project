@@ -94,7 +94,8 @@ public class unityConnect
 
                 //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
                 //Debug.Log("Received panorama: " + data.panorama);
-                //Debug.Log("Received idMap: " + data.idMap);
+                Debug.Log("Received idMap: " + data.idMap);
+                Debug.Log("Received indexMap: " + data.indexMap);
                 //Debug.Log("Received progress: " + data.progress);
                 //Debug.Log("Received text: " + data.text);
             }

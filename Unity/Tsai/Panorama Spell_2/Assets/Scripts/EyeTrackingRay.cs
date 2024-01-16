@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,33 +21,36 @@ public class EyeTrackingRay : MonoBehaviour
     private List<EyeInteractable> eyeInteractables = new List<EyeInteractable>();
     public TMP_Text colorInfoText; // 引用TMP Text
     public TMP_Text colorInfoText2; // 引用TMP Text
-    //public TMP_Text colorInfoText3; // 引用TMP Text
-    //public TMP_Text colorInfoText4; // 引用TMP Text
+    public TMP_Text colorInfoText3; // 引用TMP Text
+    public TMP_Text colorInfoText4; // 引用TMP Text
     public List<Texture2D> cubemaps = new List<Texture2D>();
     
     private Transform newTransform;
     public Material targetMaterial;
-
-    private Dictionary<string, string> cubemapDictionary = new Dictionary<string, string>
-    {
-        { "Cube (1)", "panoramawithmask/48" },
-        { "Cube (2)", "panoramawithmask/49" },
-        { "Cube (3)", "panoramawithmask/50" },
-        { "Cube (4)", "panoramawithmask/51" },
-        { "Cube (5)", "panoramawithmask/52" },
-        { "Cube (6)", "panoramawithmask/53" },
-    };
+    Texture2D tex_1;
+    Texture2D tex_2;
+    Texture2D tex_3;
     private Dictionary<int, string> labelDictionary = new Dictionary<int, string>();
+
+    private unityConnect trans_api;
+    public RawImage img_1;
+    public RawImage img_2;
+    public RawImage img_3;
+    private bool flag = false;
+    private string flag2 ;
     // Start is called before the first frame update
     void Start()
     {
         lineRender = GetComponent<LineRenderer>();
         SetupRay();
-
+        //trans_api = new unityConnect();
+        tex_1 = new Texture2D(4096, 2048);
+        tex_2 = new Texture2D(4096, 2048);
+        tex_3 = new Texture2D(4096, 2048);
         GameObject newObject = new GameObject("NewObject");
         newTransform = newObject.transform;
         newTransform.position = Vector3.zero;
-        ApplyCubemapAsSkybox("panoramawithmask/0");//原圖
+        ApplyCubemapAsSkybox_old("panoramalist/" + Path.GetFileNameWithoutExtension(GameData.nowpanorama));//原圖
 
         labelDictionary.Add(0, "person");
         labelDictionary.Add(1, "bicycle");
@@ -133,10 +137,7 @@ public class EyeTrackingRay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //Debug.Log("Wait user...");
-        //GameData.image_name = "panorama";
-        //Debug.Log("User confirms");
-        //BeginState.UserConfirm();
+       
     }
 
     void SetupRay()
@@ -154,10 +155,10 @@ public class EyeTrackingRay : MonoBehaviour
     {
         RaycastHit hit;
         Vector3 ratCastDirection = transform.TransformDirection(Vector3.forward) * rayDistanse;
-        float x = 0f; 
+        float x = 0f;
         float y = 0f;
         //正常直射
-        if (Physics.Raycast(transform.position, ratCastDirection,out hit, Mathf.Infinity, layersToInclude))
+        if (Physics.Raycast(transform.position, ratCastDirection, out hit, Mathf.Infinity, layersToInclude))
         {
             UnSelect();
             lineRender.startColor = raycolor2;
@@ -166,13 +167,7 @@ public class EyeTrackingRay : MonoBehaviour
             eyeInteractables.Add(eyeInteractable);
             eyeInteractable.IsHovered = true;
 
-            // 新增的部分
-            string objectName = hit.collider.gameObject.name;
-            if (cubemapDictionary.ContainsKey(hit.collider.name))
-            {
-                string cubemapPath = cubemapDictionary[hit.collider.name];
-                ApplyCubemapAsSkybox(cubemapPath);
-            }
+
 
         }
         else
@@ -180,9 +175,9 @@ public class EyeTrackingRay : MonoBehaviour
             lineRender.startColor = raycolor;
             lineRender.endColor = raycolor;
             UnSelect(true);
-          
+
         }
-        
+
         if (Physics.Raycast(newTransform.position + ratCastDirection, -transform.forward, out hit, rayDistanse))
         {
 
@@ -195,30 +190,65 @@ public class EyeTrackingRay : MonoBehaviour
             x = ((theta + Mathf.PI) * w) / (2 * Mathf.PI);
             y = h - ((2 * phi + Mathf.PI) * h) / (2 * Mathf.PI);
 
-            //colorInfoText.text = $"Eye Reflection Hit Position: U: {x}, V: {y}";
-            
+            colorInfoText.text = $"Eye Reflection Hit Position: U: {x}, V: {y}";
+
 
         }
         //idmap
-        GameData.idMapTexture = Resources.Load<Texture2D>("id_map");
-    
-        Color id_pixelColor = GameData.idMapTexture.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
-        
+        //Color id_pixelColor = Color.black; ;
+        //Color index_pixelColor = Color.black; ;
+        if (GameData.idMap != null && flag == false)
+        {
+            flag = true;
+            tex_1.LoadImage(GameData.idMap);
+            img_1.texture = tex_1;
 
+            tex_2.LoadImage(GameData.indexMap);
+            img_2.texture = tex_2;
+        }
+        Color id_pixelColor = tex_1.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
+        Color index_pixelColor = tex_2.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
+        colorInfoText2.text = "GameData.panoramaList.Count:"+GameData.panoramaWithMaskList.Count.ToString();
+        //這樣寫會害這個方法只run一次，eyetracking會失效 
         if (Mathf.FloorToInt(id_pixelColor.r * 255) - 1 > 0)
         {
-            string label = labelDictionary[Mathf.FloorToInt(id_pixelColor.r * 255)-1];
-            colorInfoText2.text = label;
+            string label = labelDictionary[Mathf.FloorToInt(id_pixelColor.r * 255) - 1];
+            colorInfoText3.text = "label:"+label;
+            if (label != flag2)
+            {
+                flag2 = label;
+                if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
+                {
+                    byte[] cubemapBytes = GameData.panoramaWithMaskList[Mathf.FloorToInt(index_pixelColor.r * 255) - 1];
+                    tex_3.LoadImage(cubemapBytes);
+                    img_3.texture = tex_3;
+                    colorInfoText4.text = "index_pixelColor" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
+                }
+            }
         }
-        //indexmap
-        GameData.indexMapTexture = Resources.Load<Texture2D>("index_map");
-        Color index_pixelColor = GameData.indexMapTexture.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
-        if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
-        {
-            
-            string cubemapPath = "panoramawithmask/" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
-            ApplyCubemapAsSkybox(cubemapPath);
-        }
+
+        //if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
+        //{
+        //    string cubemapPath = "panoramawithmask/" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
+        //    ApplyCubemapAsSkybox_old(cubemapPath);
+        //    colorInfoText4.text = "index_pixelColor" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
+        //}
+
+        //int index = Mathf.FloorToInt(index_pixelColor.r * 255) - 1;
+        //if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0 )
+        //{
+        //    //byte[] cubemapBytes = GameData.panoramaWithMaskList[(Mathf.FloorToInt(index_pixelColor.r * 255) - 2)];
+        //    //Cubemap cubemap = CreateCubemapFromBytes(cubemapBytes);
+        //    //ApplyCubemapAsSkybox(cubemap);
+        //    tex_3.LoadImage(GameData.panoramaWithMaskList[(Mathf.FloorToInt(index_pixelColor.r * 255) - 2)]);
+        //    img_3.texture = tex_3;
+        //    //Texture2D cubemap = CreateCubemapFromBytes_2(cubemapBytes);
+        //    //ApplyCubemapAsSkybox_2(cubemap);
+        //}
+        //else
+        //{
+        //    colorInfoText3.text = "gg";
+        //}
     }
 
     void UnSelect(bool clear = false)
@@ -232,7 +262,7 @@ public class EyeTrackingRay : MonoBehaviour
             eyeInteractables.Clear(); 
         }
     }
-    void ApplyCubemapAsSkybox(string cubemapPath)
+    void ApplyCubemapAsSkybox_old(string cubemapPath)
     {
         Cubemap cubemapTexture = Resources.Load<Cubemap>(cubemapPath);
         if (cubemapTexture != null)
@@ -243,6 +273,62 @@ public class EyeTrackingRay : MonoBehaviour
         else
         {
             Debug.LogError("404");
+        }
+    }
+
+    void ApplyCubemapAsSkybox(Cubemap cubemap)
+    {
+        if (cubemap != null)
+        {
+            targetMaterial.SetTexture("_Tex", cubemap);
+            colorInfoText3.text = "skybox已更新"; 
+        }
+        else
+        {
+            colorInfoText3.text = "404";
+        }
+    }
+
+    Cubemap CreateCubemapFromBytes(byte[] cubemapBytes)
+    {
+
+        int size = 2048; 
+        Cubemap cubemap = new Cubemap(size, TextureFormat.RGB24, false);
+
+        Texture2D tex = new Texture2D(4096, 2048, TextureFormat.RGB24, false);
+        tex.LoadImage(cubemapBytes); 
+
+        for (int face = 0; face < 6; face++)
+        {
+            Color[] facePixels = tex.GetPixels(face * size, 0, size, size);
+            CubemapFace cubemapFace = (CubemapFace)face;
+            cubemap.SetPixels(facePixels, cubemapFace);
+        }
+        cubemap.Apply();
+        return cubemap;
+    }
+
+    Texture2D CreateCubemapFromBytes_2(byte[] cubemapBytes)
+    {
+
+        Texture2D tex = new Texture2D(4096, 2048, TextureFormat.RGB24, false);
+        tex.LoadImage(cubemapBytes);
+
+
+        tex.Apply();
+        return tex;
+    }
+
+    void ApplyCubemapAsSkybox_2(Texture2D cubemap)
+    {
+        if (cubemap != null)
+        {
+            img_2.texture = cubemap;
+            colorInfoText3.text = "skybox已更新";
+        }
+        else
+        {
+            colorInfoText3.text = "404";
         }
     }
 }

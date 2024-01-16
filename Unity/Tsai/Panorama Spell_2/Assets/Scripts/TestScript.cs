@@ -49,6 +49,8 @@ public class TestScript : MonoBehaviour
             rawImage_5.texture = tex_6;
 
         }
-       
+        
+
+
     }
 }

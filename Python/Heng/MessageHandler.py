@@ -30,7 +30,7 @@ class Search:
                     cv2.imread(os.path.join('./material', image_name)),
                     image_format=Path(image_name).suffix
                 )
-                main.trans_api.send_data_to_unity(panorama=image, text=image_name)        
+                main.trans_api.send_data_to_unity(panorama=image, text=image_name)
         
 class Generate:
     """

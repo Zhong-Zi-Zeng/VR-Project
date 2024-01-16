@@ -32,11 +32,11 @@ public class TestScript : MonoBehaviour
     void Update()
     {
         
-        if (GameData.panoramaList.Count > 0) {
-            tex_1.LoadImage(GameData.panoramaList[0]);
+        if (GameData.idMap != null) {
+            tex_1.LoadImage(GameData.idMap);
             img_1.texture = tex_1;
 
-            tex_2.LoadImage(GameData.panoramaList[1]);
+            tex_2.LoadImage(GameData.indexMap);
             img_2.texture = tex_2;
         }
 

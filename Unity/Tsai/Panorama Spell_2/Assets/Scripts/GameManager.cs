@@ -26,12 +26,14 @@ public class GameData
 {
     public static List<byte[]> panoramaWithMaskList = new(); // 帶有mask的panorama
     public static List<byte[]> panoramaList = new(); // 一般的panorama，存放python有的panorama照片
+    public static List<string> panoramaNameList = new();
     public static byte[] idMap = new byte[0]; //用來儲存每個pixel對應到哪一個物件
     public static Texture2D idMapTexture;
     public static byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
     public static Texture2D indexMapTexture;
     public static int progress; // 進度條使用
     public static string text;
+    public static string nowpanorama;
 }
 
 public class GameManager

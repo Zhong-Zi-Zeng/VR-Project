@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,12 +16,12 @@ public class UserConfirm : MonoBehaviour
     void Start()
     {
         // 為每個 toggle 添加監聽器
-        toggle0.onValueChanged.AddListener(delegate { ToggleChanged(toggle0, "panorama.jpg"); });
-        toggle1.onValueChanged.AddListener(delegate { ToggleChanged(toggle1, "panorama2.jpg"); });
-        toggle2.onValueChanged.AddListener(delegate { ToggleChanged(toggle2, "panorama3.jpg"); });
-        toggle3.onValueChanged.AddListener(delegate { ToggleChanged(toggle3, "panorama4.jpg"); });
-        toggle4.onValueChanged.AddListener(delegate { ToggleChanged(toggle4, "panorama5.jpg"); });
-        toggle5.onValueChanged.AddListener(delegate { ToggleChanged(toggle5, "panorama6.jpg"); });
+        toggle0.onValueChanged.AddListener(delegate { ToggleChanged(toggle0, GameData.panoramaNameList[0]); });
+        toggle1.onValueChanged.AddListener(delegate { ToggleChanged(toggle1, GameData.panoramaNameList[1]); });
+        toggle2.onValueChanged.AddListener(delegate { ToggleChanged(toggle2, GameData.panoramaNameList[2]); });
+        toggle3.onValueChanged.AddListener(delegate { ToggleChanged(toggle3, GameData.panoramaNameList[3]); });
+        toggle4.onValueChanged.AddListener(delegate { ToggleChanged(toggle4, GameData.panoramaNameList[4]); });
+        toggle5.onValueChanged.AddListener(delegate { ToggleChanged(toggle5, GameData.panoramaNameList[5]); });
     }
     void ToggleChanged(Toggle changedToggle, string filename)
     {
@@ -28,6 +29,7 @@ public class UserConfirm : MonoBehaviour
         {
             // 當 toggle 被啟動時，呼叫 trans_api 的 SendData 方法
             Initial.trans_api.SendData("Generate", filename);
+            GameData.nowpanorama = Path.GetFileNameWithoutExtension(filename);
         }
         BeginState.UserConfirm();
     }

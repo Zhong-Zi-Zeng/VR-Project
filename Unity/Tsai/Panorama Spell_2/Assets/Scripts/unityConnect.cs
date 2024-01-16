@@ -15,7 +15,7 @@ using Unity.VisualScripting;
 public class RecvDataStruct
 {
     public byte[] panoramaWithMask = new byte[0]; // 帶有mask的panorama
-    public byte[] panorama = new byte[0]; // 一般的panorama
+    public byte[] panorama = new byte[0];// 一般的panorama
     public byte[] idMap = new byte[0]; // 用來儲存每個pixel對應到哪一個物件
     public byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
     public int progress; // 進度條使用
@@ -89,6 +89,10 @@ public class unityConnect
                 {
                     GameData.panoramaList.Add(data.panorama);
                 }
+                if (data.text.Length != 0)
+                {
+                    GameData.panoramaNameList.Add(data.text);
+                }
                 GameData.idMap = data.idMap.Length != 0 ? data.idMap : GameData.idMap;
                 GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap : GameData.indexMap;
                 GameData.progress = data.progress;
@@ -96,7 +100,8 @@ public class unityConnect
 
                 //Debug.Log("Received panoramaWithMask: " + data.panoramaWithMask);
                 //Debug.Log("Received panorama: " + data.panorama);
-                //Debug.Log("Received idMap: " + data.idMap);
+                Debug.Log("Received idMap: " + data.idMap);
+                Debug.Log("Received indexMap: " + data.indexMap);
                 //Debug.Log("Received progress: " + data.progress);
                 Debug.Log("Received text: " + data.text);
             }
@@ -111,8 +116,8 @@ public class unityConnect
 
     public void SendData(string task, string imageName = "")
     {
-        Debug.Log("Send data to python");
-
+        Debug.Log("Send data to python~~~~~~~");
+        
         SendDataStruct sendData = new SendDataStruct
         {
             task = task,
