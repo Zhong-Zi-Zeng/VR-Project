@@ -18,6 +18,7 @@ from tools.PanoramaCubemapConverter import PanoramaCubemapConverter
 
 logging.basicConfig(level=logging.INFO)
 
+
 class Main:
     def __init__(self,
                  yolov8_obj_model_type: str = 'yolov8x',
@@ -116,10 +117,13 @@ class Main:
             image_format='.png')
 
         # 讀取所有masked圖片
+        file_path_list = [mask_name for mask_name in os.listdir(obj_data_directory) if
+                          mask_name != 'id_map.png' and mask_name != 'index_map.png']
+        file_path_list.sort(key=lambda name: int(name.split(".")[0]))
+
         panorama_with_mask = [
             self.trans_api.encode_image(cv2.imread(os.path.join(obj_data_directory, mask_name)), image_format='.png')
-            for mask_name in os.listdir(obj_data_directory) if
-            mask_name != 'id_map.png' and mask_name != 'index_map.png']
+            for mask_name in file_path_list]
 
         return [panorama_with_mask, id_map, index_map]
 
