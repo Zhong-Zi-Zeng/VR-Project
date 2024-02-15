@@ -11,7 +11,7 @@ public class LearningState : StateBase
         Debug.Log("Now in the LearningState:");
 
         // ¥ý¸ü¤JScene
-        SceneManager.LoadScene(StateId.LearningState);
+        SceneManager.LoadScene(SceneName.LearningScene);
 
     }
 

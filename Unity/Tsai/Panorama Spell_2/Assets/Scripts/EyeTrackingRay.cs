@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(LineRenderer))]
@@ -23,34 +24,34 @@ public class EyeTrackingRay : MonoBehaviour
     public TMP_Text colorInfoText2; // 引用TMP Text
     public TMP_Text colorInfoText3; // 引用TMP Text
     public TMP_Text colorInfoText4; // 引用TMP Text
-    public List<Texture2D> cubemaps = new List<Texture2D>();
-    
+    //public List<Texture2D> cubemaps = new List<Texture2D>();
+
     private Transform newTransform;
     public Material targetMaterial;
-    Texture2D tex_1;
-    Texture2D tex_2;
-    Texture2D tex_3;
+    //Texture2D tex_1;
+    //Texture2D tex_2;
+    //Texture2D tex_3;
     private Dictionary<int, string> labelDictionary = new Dictionary<int, string>();
 
     private unityConnect trans_api;
-    public RawImage img_1;
-    public RawImage img_2;
-    public RawImage img_3;
+    //public RawImage img_1;
+    //public RawImage img_2;
+    //public RawImage img_3;
     private bool flag = false;
-    private string flag2 ;
+    private string flag2;
     // Start is called before the first frame update
     void Start()
     {
         lineRender = GetComponent<LineRenderer>();
         SetupRay();
         //trans_api = new unityConnect();
-        tex_1 = new Texture2D(4096, 2048);
-        tex_2 = new Texture2D(4096, 2048);
-        tex_3 = new Texture2D(4096, 2048);
+        //tex_1 = new Texture2D(4096, 2048);
+        //tex_2 = new Texture2D(4096, 2048);
+        //tex_3 = new Texture2D(4096, 2048);
         GameObject newObject = new GameObject("NewObject");
         newTransform = newObject.transform;
         newTransform.position = Vector3.zero;
-        ApplyCubemapAsSkybox_old("panoramalist/" + Path.GetFileNameWithoutExtension(GameData.nowpanorama));//原圖
+        ApplyCubemapAsSkybox("panoramalist/" + Path.GetFileNameWithoutExtension(GameData.nowpanorama));//原圖
 
         labelDictionary.Add(0, "person");
         labelDictionary.Add(1, "bicycle");
@@ -137,7 +138,10 @@ public class EyeTrackingRay : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-       
+        if (OVRInput.GetDown(OVRInput.Button.Four))
+        {
+            GameManager.ChangeState(StateId.LearningState);
+        }
     }
 
     void SetupRay()
@@ -190,79 +194,44 @@ public class EyeTrackingRay : MonoBehaviour
             x = ((theta + Mathf.PI) * w) / (2 * Mathf.PI);
             y = h - ((2 * phi + Mathf.PI) * h) / (2 * Mathf.PI);
 
-            colorInfoText.text = $"Eye Reflection Hit Position: U: {x}, V: {y}";
+            //colorInfoText.text = $"Eye Reflection Hit Position: U: {x}, V: {y}";
 
 
         }
         //idmap
-        //Color id_pixelColor = Color.black; ;
-        //Color index_pixelColor = Color.black; ;
-        if (GameData.idMap != null && flag == false)
-        {
-            flag = true;
-            tex_1.LoadImage(GameData.idMap);
-            img_1.texture = tex_1;
+        GameData.idMapTexture = Resources.Load<Texture2D>("id_map");
 
-            tex_2.LoadImage(GameData.indexMap);
-            img_2.texture = tex_2;
-        }
-        Color id_pixelColor = tex_1.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
-        Color index_pixelColor = tex_2.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
-        colorInfoText2.text = "GameData.panoramaList.Count:"+GameData.panoramaWithMaskList.Count.ToString();
-        //這樣寫會害這個方法只run一次，eyetracking會失效 
+        Color id_pixelColor = GameData.idMapTexture.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
+
+
         if (Mathf.FloorToInt(id_pixelColor.r * 255) - 1 > 0)
         {
             string label = labelDictionary[Mathf.FloorToInt(id_pixelColor.r * 255) - 1];
-            colorInfoText3.text = "label:"+label;
-            if (label != flag2)
-            {
-                flag2 = label;
-                if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
-                {
-                    byte[] cubemapBytes = GameData.panoramaWithMaskList[Mathf.FloorToInt(index_pixelColor.r * 255) - 1];
-                    tex_3.LoadImage(cubemapBytes);
-                    img_3.texture = tex_3;
-                    colorInfoText4.text = "index_pixelColor" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
-                }
-            }
+            colorInfoText2.text = label;
         }
+        //indexmap
+        GameData.indexMapTexture = Resources.Load<Texture2D>("index_map");
+        Color index_pixelColor = GameData.indexMapTexture.GetPixel(Mathf.FloorToInt(x), 2048 - Mathf.FloorToInt(y));
+        if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
+        {
 
-        //if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0)
-        //{
-        //    string cubemapPath = "panoramawithmask/" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
-        //    ApplyCubemapAsSkybox_old(cubemapPath);
-        //    colorInfoText4.text = "index_pixelColor" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
-        //}
-
-        //int index = Mathf.FloorToInt(index_pixelColor.r * 255) - 1;
-        //if (Mathf.FloorToInt(index_pixelColor.r * 255) - 1 > 0 )
-        //{
-        //    //byte[] cubemapBytes = GameData.panoramaWithMaskList[(Mathf.FloorToInt(index_pixelColor.r * 255) - 2)];
-        //    //Cubemap cubemap = CreateCubemapFromBytes(cubemapBytes);
-        //    //ApplyCubemapAsSkybox(cubemap);
-        //    tex_3.LoadImage(GameData.panoramaWithMaskList[(Mathf.FloorToInt(index_pixelColor.r * 255) - 2)]);
-        //    img_3.texture = tex_3;
-        //    //Texture2D cubemap = CreateCubemapFromBytes_2(cubemapBytes);
-        //    //ApplyCubemapAsSkybox_2(cubemap);
-        //}
-        //else
-        //{
-        //    colorInfoText3.text = "gg";
-        //}
+            string cubemapPath = "panoramawithmask/" + (Mathf.FloorToInt(index_pixelColor.r * 255) - 1).ToString();
+            ApplyCubemapAsSkybox(cubemapPath);
+        }
     }
 
     void UnSelect(bool clear = false)
     {
-        foreach(var interactable in eyeInteractables)
+        foreach (var interactable in eyeInteractables)
         {
             interactable.IsHovered = false;
         }
         if (clear)
         {
-            eyeInteractables.Clear(); 
+            eyeInteractables.Clear();
         }
     }
-    void ApplyCubemapAsSkybox_old(string cubemapPath)
+    void ApplyCubemapAsSkybox(string cubemapPath)
     {
         Cubemap cubemapTexture = Resources.Load<Cubemap>(cubemapPath);
         if (cubemapTexture != null)
@@ -276,59 +245,4 @@ public class EyeTrackingRay : MonoBehaviour
         }
     }
 
-    void ApplyCubemapAsSkybox(Cubemap cubemap)
-    {
-        if (cubemap != null)
-        {
-            targetMaterial.SetTexture("_Tex", cubemap);
-            colorInfoText3.text = "skybox已更新"; 
-        }
-        else
-        {
-            colorInfoText3.text = "404";
-        }
-    }
-
-    Cubemap CreateCubemapFromBytes(byte[] cubemapBytes)
-    {
-
-        int size = 2048; 
-        Cubemap cubemap = new Cubemap(size, TextureFormat.RGB24, false);
-
-        Texture2D tex = new Texture2D(4096, 2048, TextureFormat.RGB24, false);
-        tex.LoadImage(cubemapBytes); 
-
-        for (int face = 0; face < 6; face++)
-        {
-            Color[] facePixels = tex.GetPixels(face * size, 0, size, size);
-            CubemapFace cubemapFace = (CubemapFace)face;
-            cubemap.SetPixels(facePixels, cubemapFace);
-        }
-        cubemap.Apply();
-        return cubemap;
-    }
-
-    Texture2D CreateCubemapFromBytes_2(byte[] cubemapBytes)
-    {
-
-        Texture2D tex = new Texture2D(4096, 2048, TextureFormat.RGB24, false);
-        tex.LoadImage(cubemapBytes);
-
-
-        tex.Apply();
-        return tex;
-    }
-
-    void ApplyCubemapAsSkybox_2(Texture2D cubemap)
-    {
-        if (cubemap != null)
-        {
-            img_2.texture = cubemap;
-            colorInfoText3.text = "skybox已更新";
-        }
-        else
-        {
-            colorInfoText3.text = "404";
-        }
-    }
 }

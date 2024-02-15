@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import os
 import cv2
 
@@ -45,9 +46,15 @@ class Generate:
     def handle(main, data, *args, **kwargs):
         with reporter(main.trans_api):
             panorama_img_name_ext = data['imageName']
-            panorama_with_mask, id_map, index_map = main.check_obj_data(panorama_img_name_ext)
+            panorama_with_mask, id_map, encode_id_map, encode_index_map = main.check_obj_data(panorama_img_name_ext)
+            
+            # 新增代碼：使用 find_unique_grayscale_values 並將結果發送回 Unity
+            unique_values = np.unique(id_map[..., 0])
+            main.trans_api.send_data_to_unity(unique_values=list(map(int, unique_values)))
 
-            main.trans_api.send_data_to_unity(id_map=id_map)
-            main.trans_api.send_data_to_unity(index_map=index_map)
-            for mask_img in panorama_with_mask:
-                main.trans_api.send_data_to_unity(panorama_with_mask=mask_img)
+            main.trans_api.send_data_to_unity(id_map=encode_id_map)
+            main.trans_api.send_data_to_unity(index_map=encode_index_map)
+            # 只傳一張
+            # for mask_img in panorama_with_mask:
+            #     main.trans_api.send_data_to_unity(panorama_with_mask=mask_img)
+            main.trans_api.send_data_to_unity(panorama_with_mask=panorama_with_mask[0])

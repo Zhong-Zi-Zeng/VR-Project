@@ -15,7 +15,7 @@ from strategies import *
 from MessageHandler import *
 from SegmentAnything import SegmentAnything
 from tools.PanoramaCubemapConverter import PanoramaCubemapConverter
-
+from PIL import Image
 logging.basicConfig(level=logging.INFO)
 
 
@@ -106,26 +106,28 @@ class Main:
             panorama_img = cv2.imread(os.path.join('material', panorama_img_name_ext))
             self._generate_mask(panorama_img=panorama_img, panorama_img_name=panorama_img_name)
 
-        # 讀取id_map
-        id_map = self.trans_api.encode_image(
-            cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'id_map.png')),
-            image_format='.png')
+        # 讀取id_map    
+        id_map =  cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'id_map.png'))    
+        encode_id_map = self.trans_api.encode_image(id_map, image_format='.png')
 
         # 讀取index_map
-        index_map = self.trans_api.encode_image(
+        encode_index_map = self.trans_api.encode_image(
             cv2.imread(os.path.join('map', self.method_name[method], panorama_img_name, 'index_map.png')),
             image_format='.png')
 
-        # 讀取所有masked圖片
+        # 讀取所有masked圖片，並轉成cubemap
         file_path_list = [mask_name for mask_name in os.listdir(obj_data_directory) if
                           mask_name != 'id_map.png' and mask_name != 'index_map.png']
         file_path_list.sort(key=lambda name: int(name.split(".")[0]))
 
-        panorama_with_mask = [
-            self.trans_api.encode_image(cv2.imread(os.path.join(obj_data_directory, mask_name)), image_format='.png')
-            for mask_name in file_path_list]
+        cubemap_with_mask = []
+        for mask_name in file_path_list:
+            panorama_image = cv2.imread(os.path.join(obj_data_directory, mask_name))
+            cube_image = self.converter.p2c_image(panorama_image, 1024, cube_format='dice')
+            encode_cube_image = self.trans_api.encode_image(cube_image, image_format='.png')
+            cubemap_with_mask.append(encode_cube_image)
 
-        return [panorama_with_mask, id_map, index_map]
+        return [cubemap_with_mask, id_map, encode_id_map, encode_index_map]
 
     def _generate_mask(self,
                        panorama_img: np.ndarray[np.uint8],
@@ -156,9 +158,17 @@ class Main:
         mask_generator.generate_mask(panorama_img, panorama_img_name)
 
 
-# img = cv2.imread('./material/panorama.png')
-# img = cv2.resize(img, (1024, 512))
-m = Main()
-# m.check_obj_data(panorama_img_name_ext="panorama.png")
-# m._check_obj_data(2, panorama_img_name_ext='panorama.png')
-# m.generate_mask(img, panorama_img_name='panorama')
+    def find_unique_grayscale_values(self, id_map: np.ndarray):
+        """
+        This function loads an image, converts it to grayscale, and then calculates
+        and returns the unique grayscale values and their count.
+        """     
+        unique_values = np.unique(id_map)
+        return unique_values
+    
+
+if __name__ == "__main__":
+    m = Main()
+    # m.check_obj_data(panorama_img_name_ext="panorama.png")
+    # m._check_obj_data(2, panorama_img_name_ext='panorama.png')
+    # m.generate_mask(img, panorama_img_name='panorama')

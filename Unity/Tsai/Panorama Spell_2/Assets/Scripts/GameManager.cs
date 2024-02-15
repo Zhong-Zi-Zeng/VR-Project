@@ -34,6 +34,7 @@ public class GameData
     public static int progress; // 進度條使用
     public static string text;
     public static string nowpanorama;
+    public static List<int> unique_values = new();
 }
 
 public class GameManager

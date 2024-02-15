@@ -11,11 +11,11 @@ from typing import Optional
 
 class pythonConnect:
     # def __init__(self, TCP_IP='127.0.0.1'):
-    def __init__(self, TCP_IP='192.168.1.10'):
+    def __init__(self, TCP_IP='192.168.1.27'):
         self.TCP_IP = TCP_IP
 
-        self.receive_port = 6666
-        self.send_port = 7777
+        self.receive_port = 8888
+        self.send_port = 9999
 
     @staticmethod
     def encode_image(image: np.ndarray, image_format: str):
@@ -34,7 +34,8 @@ class pythonConnect:
                            id_map: Optional[list[int]] = None,
                            index_map: Optional[list[int]] = None,
                            progress: Optional[int] = None,
-                           text: Optional[str] = None
+                           text: Optional[str] = None,
+                           unique_values: Optional[list[int]] = None
                            ):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,7 +47,8 @@ class pythonConnect:
             'idMap': id_map,
             'indexMap': index_map,
             'progress': progress,
-            'text': text
+            'text': text,
+            'unique_values': unique_values
         }
 
         # 傳送給unity

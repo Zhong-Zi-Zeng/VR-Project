@@ -20,6 +20,8 @@ public class RecvDataStruct
     public byte[] indexMap = new byte[0]; // 用來儲存每個pixel對應到哪一張mask
     public int progress; // 進度條使用
     public string text;
+    public List<int> unique_values;
+
 }
 
 //傳輸的資料型態
@@ -48,12 +50,12 @@ public class unityConnect
 
         // 建立連線
         //IPEndPoint receiveIp = new(IPAddress.Parse("127.0.0.1"), 7777);
-        IPEndPoint receiveIp = new(IPAddress.Parse("0.0.0.0"), 7777);
+        IPEndPoint receiveIp = new(IPAddress.Parse("0.0.0.0"), 9999);
         listener = new TcpListener(receiveIp);
         listener.Start();
 
         //IPEndPoint sendIp = new(IPAddress.Parse("127.0.0.1"), 6666);
-        IPEndPoint sendIp = new(IPAddress.Parse("0.0.0.0"), 6666);
+        IPEndPoint sendIp = new(IPAddress.Parse("0.0.0.0"), 8888);
         reader = new TcpListener(sendIp);
         reader.Start();
 
@@ -92,7 +94,9 @@ public class unityConnect
                 if (data.text.Length != 0)
                 {
                     GameData.panoramaNameList.Add(data.text);
+                    
                 }
+                GameData.unique_values = data.unique_values.Count != 0 ? data.unique_values : GameData.unique_values;
                 GameData.idMap = data.idMap.Length != 0 ? data.idMap : GameData.idMap;
                 GameData.indexMap = data.indexMap.Length != 0 ? data.indexMap : GameData.indexMap;
                 GameData.progress = data.progress;
